@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Windows setup instructions
+    url: https://github.com/cdionne7/semester-navigator#one-command-windows-install
+    about: Try the current no-auth installer before filing an issue.

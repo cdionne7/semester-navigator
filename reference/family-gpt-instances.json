@@ -1,0 +1,32 @@
+{
+  "instances": [
+    {
+      "instance_key": "son",
+      "gpt_name": "Semester Navigator - Son",
+      "bound_profile_id": null,
+      "student_root": null,
+      "browser_profile": null,
+      "site_project_id": null,
+      "site_url": null,
+      "status": "needs_first_run"
+    },
+    {
+      "instance_key": "daughter",
+      "gpt_name": "Semester Navigator - Daughter",
+      "bound_profile_id": null,
+      "student_root": null,
+      "browser_profile": null,
+      "site_project_id": null,
+      "site_url": null,
+      "status": "needs_first_run"
+    }
+  ],
+  "requirements": {
+    "one_student_per_gpt": true,
+    "separate_student_roots": true,
+    "separate_chrome_profiles": true,
+    "separate_sites_projects": true,
+    "separate_durable_storage": true,
+    "owner_only_first_deployment": true
+  }
+}

@@ -1,0 +1,44 @@
+name: Windows setup problem
+description: Report a first-install or setup failure without using GitHub CLI.
+title: "Windows setup: "
+labels:
+  - setup
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include passwords, access tokens, device codes, cookies, school records, grades, or other student data.
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Where did setup stop?
+      options:
+        - Downloading Semester Navigator
+        - Downloading portable Node.js
+        - Installing npm dependencies
+        - Building or running tests
+        - Opening the folder in Codex
+        - Student first-use setup
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Exact non-sensitive error message
+      description: Copy the error text, but remove names, email addresses, paths containing names, and credentials.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: attempted
+    attributes:
+      label: What happened immediately before the error?
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed credentials and student data from this report.
+          required: true

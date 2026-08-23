@@ -1,0 +1,90 @@
+{
+  "profileId": "prototype-sample-student",
+  "name": "Sample Student",
+  "school": "Example University",
+  "theme": "light",
+  "workHours": "",
+  "refreshedAt": "Not refreshed yet",
+  "courses": [
+    {
+      "id": "stats",
+      "name": "Statistics",
+      "instructor": "Professor Chen",
+      "officeHours": "Tue 2:00–3:00 PM",
+      "grade": "88%",
+      "status": "On track",
+      "next": "Exam Friday",
+      "completed": 7,
+      "total": 10
+    },
+    {
+      "id": "bio",
+      "name": "Biology",
+      "instructor": "Dr. Patel",
+      "officeHours": "Wed 11:00 AM–noon",
+      "grade": "82%",
+      "status": "Needs attention",
+      "next": "Lab results Thursday",
+      "completed": 5,
+      "total": 9
+    },
+    {
+      "id": "eng",
+      "name": "English",
+      "instructor": "Professor Diaz",
+      "officeHours": "Thu 1:00–2:00 PM",
+      "grade": "91%",
+      "status": "Needs draft",
+      "next": "Essay outline Wednesday",
+      "completed": 4,
+      "total": 8
+    }
+  ],
+  "tasks": [
+    {
+      "id": "1",
+      "course": "Statistics",
+      "title": "Make a 20-question practice set",
+      "when": "Today",
+      "minutes": 45,
+      "state": "now",
+      "reason": "The exam is Friday and counts for 30% of your grade."
+    },
+    {
+      "id": "2",
+      "course": "Biology",
+      "title": "Turn data into a results outline",
+      "when": "Today",
+      "minutes": 60,
+      "state": "next",
+      "reason": "The lab deadline is close and this course needs attention."
+    },
+    {
+      "id": "3",
+      "course": "English",
+      "title": "Upload the essay prompt and rubric",
+      "when": "Today",
+      "minutes": 10,
+      "state": "next",
+      "reason": "A short start today removes a bigger problem tomorrow."
+    },
+    {
+      "id": "4",
+      "course": "English",
+      "title": "Build the essay outline",
+      "when": "Tomorrow",
+      "minutes": 45,
+      "state": "next",
+      "reason": "The outline is due Wednesday."
+    },
+    {
+      "id": "5",
+      "course": "Statistics",
+      "title": "Review missed practice questions",
+      "when": "This week",
+      "minutes": 35,
+      "state": "next",
+      "reason": "Practice feedback is the fastest way to improve before the exam."
+    }
+  ]
+}

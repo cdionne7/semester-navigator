@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "instance_key": "[son-or-daughter]",
+  "profile_id": "[student-slug]",
+  "student_display_name": "[student name]",
+  "status": "not_created",
+  "provisioning_status": "not_started",
+  "project_id": null,
+  "url": null,
+  "access_mode": "owner-only",
+  "storage": "dedicated-d1",
+  "d1_binding": "DB",
+  "r2_binding": null,
+  "source_root": "[absolute student site root]",
+  "browser_profile": "[dedicated Chrome profile]",
+  "last_verified": "YYYY-MM-DD"
+}
