@@ -13,8 +13,10 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
     "setup:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-windows.ps1",
+    "semester:update": "node scripts/update-semester-navigator.mjs",
     "student:bootstrap": "node scripts/bootstrap-student-site.mjs",
-    "student:record-site": "node scripts/record-student-site.mjs"
+    "student:record-site": "node scripts/record-student-site.mjs",
+    "student:record-access": "node scripts/record-student-site-access.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

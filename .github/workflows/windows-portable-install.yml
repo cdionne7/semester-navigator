@@ -17,6 +17,16 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: Parse Windows helper scripts
+        shell: powershell
+        run: |
+          @(
+            ".\scripts\install-windows.ps1",
+            ".\scripts\setup-windows.ps1",
+            ".\scripts\update-semester-navigator.ps1"
+          ) | ForEach-Object {
+            [void][scriptblock]::Create((Get-Content -LiteralPath $_ -Raw))
+          }
       - name: Install with no Git, Node, or npm on PATH
         shell: powershell
         run: |

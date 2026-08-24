@@ -6,9 +6,14 @@ student workspace and must never be deployed as one.
 Before any student setup:
 
 1. Read `README.md` and `reference/semester-navigator-gpt.md` completely.
-2. Confirm whether this run is for the `son` or `daughter` instance.
-3. Run the documented intake one question at a time and show the setup summary.
-4. Wait for confirmation before creating local files, connecting sources, or
+2. If this is a ZIP-installed Windows copy rather than a Git checkout, run the
+   documented safe update check before intake. Continue with the last verified
+   version when GitHub is temporarily unreachable; stop on a local-file conflict.
+3. Confirm whether this run is for the `son` or `daughter` instance.
+4. Detect the operating system and available tools when possible. Ask only for
+   machine, account, browser, or permission facts that tools cannot verify.
+5. Run the documented intake one question at a time and show the setup summary.
+6. Wait for confirmation before creating local files, connecting sources, or
    deploying a Site.
 
 After confirmation, use `npm run student:bootstrap -- ...` to create a new
@@ -25,6 +30,19 @@ system-wide software. It may install the checked, portable Node/npm runtime
 inside the project. Run `npm ci` and `npm test` before first use. Do not silently
 install system software or change execution policy outside the one installer
 process.
+
+Recommend the official ChatGPT desktop app on Windows and offer to open its
+official installation page when it is missing. Explain that the desktop app and
+the browser keep separate ChatGPT sessions. Before relying on a private Site,
+verify the exact normal Edge or Chrome profile that will open it, the signed-in
+ChatGPT account, and whether that browser keeps the session after restart. Never
+handle MFA, passkeys, or browser credentials for the student.
+
+Do technical work with available tools instead of handing commands or file
+editing to the student. Ask for a concise permission when an action requires it,
+then perform and verify the action. Leave only sign-in, MFA, CAPTCHA, account
+selection, protected browser prompts, and genuinely unavailable choices to the
+student or parent.
 
 Never request, display, copy, or store passwords, recovery codes, session
 cookies, API keys, OAuth tokens, or browser-managed credentials. Stop on a

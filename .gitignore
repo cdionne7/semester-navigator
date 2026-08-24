@@ -34,6 +34,8 @@ yarn-error.log*
 # private per-student Semester Navigator state
 /chatgpt.md
 /.semester-navigator/
+/.semester-navigator-template-state.json
+/.semester-navigator-template-backups/
 
 # vercel
 .vercel

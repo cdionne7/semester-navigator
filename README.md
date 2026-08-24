@@ -45,13 +45,24 @@ portable Node.js/npm runtime inside that project, runs `npm ci`, builds the
 application, and runs the full test suite. It does not change the machine-wide
 `PATH` or store GitHub credentials.
 
+On later runs, `scripts/setup-windows.ps1` checks the public `main` branch for a
+safe update before setup. It updates only tracked template files, stops on a
+local-file conflict, keeps a recovery backup, and verifies the result. Git,
+GitHub CLI, and GitHub authentication are not required.
+
+For normal Windows use, install the official
+[ChatGPT desktop app](https://learn.chatgpt.com/docs/windows/windows-app). The
+desktop app is recommended for chats and project work. Hosted Sites still open
+in Edge or Chrome and require that browser profile to have its own persistent
+ChatGPT session.
+
 After setup, press `Ctrl+O` in the ChatGPT desktop app, open the reported folder,
 and paste:
 
 ```text
 Read AGENTS.md completely, confirm setup passed, and start the first-use student
-setup one question at a time. Do not deploy or publish anything without asking
-first.
+setup one question at a time. Detect what you can, recommend the safest option,
+and do the technical work after asking for any required permission.
 ```
 
 If the project folder is already present, run this from that folder:
@@ -59,6 +70,9 @@ If the project folder is already present, run this from that folder:
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-windows.ps1
 ```
+
+That command also performs the automatic public-repository update check. If
+GitHub is temporarily unavailable, it keeps the last verified local release.
 
 Report installation problems with the browser form at
 <https://github.com/cdionne7/semester-navigator/issues/new?template=setup-problem.yml>.
@@ -102,13 +116,32 @@ npm run student:bootstrap -- \
   --school "School name" \
   --semester "Fall 2026" \
   --timezone "America/New_York" \
+  --machine-platform "windows" \
+  --device-mode "own-device" \
+  --desktop-app "installed" \
+  --site-browser "edge" \
   --student-root "/absolute/private/student-site-root" \
-  --browser-profile "Student name - School" \
+  --browser-profile "Student name - School - Edge" \
+  --browser-session "verified" \
+  --browser-session-persistence "verified" \
+  --passkey-status "enabled" \
+  --site-viewer-email "approved-viewer@example.com" \
+  --store-site-viewer-email "yes" \
+  --automatic-updates "yes" \
   --age-eligible "yes" \
-  --shared-chatgpt-account "yes"
+  --shared-chatgpt-account "yes" \
+  --prepare "yes"
 ```
 
-Run it separately from the other GPT with `--instance "daughter"`, a different profile ID, a different absent target root, and a different Chrome profile. Each result contains a fresh `.openai/hosting.json` with D1 requested and no `project_id`. It also replaces the prototype seed with the confirmed student's name and school and an empty course/task list, so prototype grades and assignments are never copied into a student Site.
+Codex constructs and runs this command after the setup summary is approved; the
+student should not have to type it. Run it separately from the other GPT with
+`--instance "daughter"`, a different profile ID, a different absent target root,
+and a different named browser profile. Each result contains a fresh
+`.openai/hosting.json` with D1 requested and no `project_id`. It also replaces
+the prototype seed with the confirmed student's name and school and an empty
+course/task list, so prototype grades and assignments are never copied into a
+student Site. By default the bootstrap installs dependencies and runs the full
+tests in the generated student root.
 
 Open the resulting student root with `@Sites`, create one owner-only Site, and let Sites write its new project ID into that root's hosting manifest. Then bind only the tool-confirmed deployment:
 
@@ -121,7 +154,55 @@ npm run student:record-site -- \
   --access "owner-only"
 ```
 
-The recorder stops on a root, student, Chrome profile, D1 binding, project ID, or access mismatch. The generated Site stores its plan in that Site's dedicated D1 database and uses profile-scoped browser storage only when D1 is unavailable. Neither command accepts or stores an LMS password. Brightspace sign-in remains in the dedicated Chrome profile through browser-managed autofill and student-handled MFA or security prompts.
+The recorder stops on a root, student, browser profile, D1 binding, project ID,
+or access mismatch. The generated Site stores its plan in that Site's dedicated
+D1 database and uses profile-scoped browser storage only when D1 is unavailable.
+Neither command accepts or stores an LMS password. School sign-in remains in the
+dedicated browser profile through browser-managed autofill and student-handled
+MFA or security prompts.
+
+After deployment, open the exact Site URL in the student's recorded normal Edge
+or Chrome profile. An authenticated desktop app does not authenticate that
+browser. Keep owner-only access when the Site owner account is the intended
+viewer. Where Sites supports selected-user sharing, add only the approved
+student account after explicit confirmation. Never use public access for grades,
+assignments, email addresses, or coursework. Follow the official
+[Sites access guidance](https://learn.chatgpt.com/docs/sites) for the available
+audience controls, then record the verified result:
+
+```bash
+npm run student:record-access -- \
+  --student-root "/absolute/private/student-site-root" \
+  --profile-id "student-specific-slug" \
+  --access "owner-only" \
+  --viewer-emails "approved-viewer@example.com" \
+  --browser-profile "Student name - School - Edge" \
+  --verified "yes"
+```
+
+Omit the `--viewer-emails` argument when storing the address locally was not
+approved. The recorder rejects public access, an unverified browser test, or a
+student/browser mismatch.
+
+## Automatic student updates
+
+Each generated student workspace includes a safe updater. When automatic
+updates are approved, its `AGENTS.md` tells Codex to run one update check at the
+start of a new working chat. On Windows, Codex runs:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/update-semester-navigator.ps1 -ProjectRoot "C:\exact\student\root" -Mode student
+```
+
+The updater uses the public repository without Git or a GitHub login. It
+preserves `chatgpt.md`, the student profile, Site record and project ID, hosting
+manifest, private seed, and Site database data. It stops rather than overwrite a
+locally changed managed file. Changed template files are backed up; dependencies
+and tests are refreshed; a failed verification is rolled back automatically.
+If files changed and that student already has a deployed Site, Codex explains
+which existing private Site needs the update, asks permission, and then uses
+Sites to update and re-verify that same project. It must not create a replacement
+Site during an update.
 
 ## Workspace Auth Headers
 
@@ -189,8 +270,10 @@ actions tied to the current ChatGPT user. Leave public content anonymous.
 - `npm run build`: verify the vinext build output
 - `npm test`: build the starter and verify its rendered loading skeleton
 - `npm run db:generate`: generate Drizzle migrations after schema changes
+- `npm run semester:update`: safely update an installed canonical or student workspace
 - `npm run student:bootstrap -- ...`: create one new isolated student Site source root
 - `npm run student:record-site -- ...`: record a Sites deployment only after exact binding checks pass
+- `npm run student:record-access -- ...`: record verified private Site audience and browser access
 
 ## Learn More
 
