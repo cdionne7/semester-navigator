@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "instance_key": "[son-or-daughter]",
   "profile_id": "[student-slug]",
   "student_display_name": "[student name]",
@@ -12,6 +12,14 @@
   "d1_binding": "DB",
   "r2_binding": null,
   "source_root": "[absolute student site root]",
-  "browser_profile": "[dedicated Chrome profile]",
+  "browser_profile": "[dedicated browser profile]",
+  "audience": {
+    "mode": "owner-only",
+    "viewer_email": null,
+    "viewer_email_storage_approved": false,
+    "allowed_viewer_emails": [],
+    "browser_access_status": "pending",
+    "access_last_verified": null
+  },
   "last_verified": "YYYY-MM-DD"
 }

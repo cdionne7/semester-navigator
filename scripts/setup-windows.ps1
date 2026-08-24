@@ -1,5 +1,6 @@
 param(
-  [string]$ProjectRoot = ""
+  [string]$ProjectRoot = "",
+  [switch]$SkipUpdate
 )
 
 $ErrorActionPreference = "Stop"
@@ -89,6 +90,15 @@ if (-not (Test-UsableNodeAndNpm)) {
   throw "Node.js $minimumNode or newer with npm is unavailable, including after the portable-runtime setup."
 }
 
+$isGitCheckout = Test-Path (Join-Path $ProjectRoot ".git")
+if (-not $SkipUpdate -and -not $isGitCheckout) {
+  Write-Host "Checking the public Semester Navigator repository for a safe update..."
+  & node scripts/update-semester-navigator.mjs --root $ProjectRoot --mode canonical --verify yes --initialize no --allow-offline yes
+  if ($LASTEXITCODE -ne 0) {
+    throw "The automatic Semester Navigator update stopped with exit code $LASTEXITCODE."
+  }
+}
+
 $hostingPath = Join-Path $ProjectRoot ".openai\hosting.json"
 $hostingExamplePath = Join-Path $ProjectRoot ".openai\hosting.example.json"
 if (-not (Test-Path $hostingPath)) {
@@ -110,12 +120,22 @@ if ($LASTEXITCODE -ne 0) {
   throw "npm test failed with exit code $LASTEXITCODE."
 }
 
+$templateStatePath = Join-Path $ProjectRoot ".semester-navigator-template-state.json"
+if (-not $isGitCheckout -and -not (Test-Path $templateStatePath)) {
+  Write-Host "Enabling safe automatic updates for this installation..."
+  & node scripts/update-semester-navigator.mjs --root $ProjectRoot --mode canonical --verify no --initialize yes --allow-offline yes
+  if ($LASTEXITCODE -ne 0) {
+    throw "Automatic update tracking could not be initialized."
+  }
+}
+
 Write-Host ""
 Write-Host "Semester Navigator is ready." -ForegroundColor Green
+Write-Host "Recommended on Windows: use the ChatGPT desktop app for chats and project work. Hosted Sites still open in a browser and need that browser's own signed-in session."
 Write-Host "Open this folder in Codex with Ctrl+O:"
 Write-Host $ProjectRoot
 Write-Host ""
 Write-Host "Then paste:"
-Write-Host "Read AGENTS.md completely, confirm setup passed, and start the first-use student setup one question at a time. Do not deploy or publish anything without asking first."
+Write-Host "Read AGENTS.md completely, check for updates, detect this Windows setup, and start the guided student setup one question at a time. Do the technical work yourself after asking for any required permission."
 Write-Host ""
 Write-Host "Setup problems: $issueUrl"

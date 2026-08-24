@@ -46,7 +46,7 @@ try {
   }
 }
 
-& (Join-Path $Destination "scripts\setup-windows.ps1") -ProjectRoot $Destination
+& (Join-Path $Destination "scripts\setup-windows.ps1") -ProjectRoot $Destination -SkipUpdate
 if ($LASTEXITCODE -ne 0) {
   throw "Semester Navigator setup failed with exit code $LASTEXITCODE."
 }

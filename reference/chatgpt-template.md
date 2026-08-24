@@ -10,8 +10,35 @@
 - Semester: `[semester]`
 - Time zone: `[time zone]`
 - ChatGPT login: `[individual or trusted shared household account]`
-- Dedicated Chrome profile: `[student-specific Chrome profile]`
+- Dedicated Site browser profile: `[student-specific browser profile]`
 - Last verified: `[YYYY-MM-DD]`
+
+## Computer and ChatGPT access
+
+- Platform: `[machine platform]`
+- Device arrangement: `[device mode]`
+- ChatGPT desktop app: `[installed/not-installed/declined/not-supported]`
+- Browser used for hosted Sites: `[site browser]`
+- Browser profile: `[student-specific browser profile]`
+- ChatGPT browser session: `[verified/pending browser session]`
+- Session still present after browser restart: `[verified/pending session persistence]`
+- Passkey status: `[enabled/not-enabled/unavailable/unknown]`
+- Intended Site viewer email: `[viewer email or not stored]`
+
+The ChatGPT desktop app and the Site browser have separate sessions. A private
+Site is not ready for normal student use until the intended account works in the
+exact browser profile above and the session survives a browser restart.
+
+## Template updates
+
+- Automatic updates: `[enabled/disabled]`
+- Repository: `https://github.com/cdionne7/semester-navigator`
+- Channel: `main`
+- State: `.semester-navigator/update-state.json`
+
+Automatic updates may change only template-managed application files. They must
+preserve this file, the student profile, Site record, hosting project ID,
+private seed, and durable Site data. A failed verified update must roll back.
 
 ## Workspace boundary
 
@@ -38,12 +65,14 @@ These addresses identify the intended account. They are not credentials. Never s
 - Sites project ID: `[tool-confirmed ID or not created]`
 - URL: `[tool-confirmed URL or not deployed]`
 - Access: `Owner-only unless a later audience change is explicitly approved`
+- Intended viewer account: `[viewer email or not stored]`
+- Browser access test: `[pending/verified]`
 - Durable storage: `Dedicated to this Site and student profile`
 - Source root: `[absolute student Site root]`
 - Hosting manifest: `[source root]/.openai/hosting.json`
 - Last verified: `[YYYY-MM-DD/never]`
 
-This student must not share a Sites project, URL, storage binding, source root, hosting manifest, or Chrome profile with another student. Do not use a student selector or combined family dashboard.
+This student must not share a Sites project, URL, storage binding, source root, hosting manifest, or named browser profile with another student. Do not use a student selector or combined family dashboard.
 
 ## Connected sources
 
@@ -76,6 +105,7 @@ Do not promote a lower-priority source over a conflicting higher-priority source
 - Confirm before: external writes, calendar changes, messages, submissions, moving files, or revising confirmed tracker facts.
 - Unavailable or blocked: `[sources/actions]`
 - Never permitted: requesting or storing passwords, recovery codes, session cookies, API keys, or OAuth tokens.
+- Assistance rule: Codex performs available technical setup, update, verification, and file work. The student handles only protected sign-in steps and choices Codex cannot safely determine.
 
 ## Operating rules
 
@@ -85,8 +115,9 @@ Do not promote a lower-priority source over a conflicting higher-priority source
 4. Do not claim a source is connected until the connection has been verified.
 5. Do not use another student’s files, memory, connected account, browser session, tracker, or Site profile.
 6. Do not create, update, or deploy from another student’s Site project, source root, hosting manifest, or storage.
-7. Chrome may use browser-managed autofill, but never reveal, read, copy, paste, or store a saved password. Hand sign-in, MFA, CAPTCHA, Touch ID, and security prompts to the student.
+7. Edge or Chrome may use browser-managed autofill, but never reveal, read, copy, paste, or store a saved password. Hand sign-in, MFA, CAPTCHA, Windows Hello, passkeys, Touch ID, and security prompts to the student.
 8. Ask before external writes or changes to confirmed facts.
+9. Keep private student Sites owner-only or selected-user only. Verify the intended account in the recorded browser profile after every access change.
 
 ## Continuity
 
