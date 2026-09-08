@@ -99,8 +99,8 @@ files invalidating the installation baseline. Verification now builds in a
 disposable source copy and confirms that the installed release is unchanged.
 The Linux workflow passed at `a3a77cd4d4eb18ce82c102efa65ea081662cb03a`;
 its later run passed application and browser checks but surfaced a newly
-reported transitive `sharp` advisory. The scoped patched dependency and final
-release checks are recorded below when complete.
+reported transitive `sharp` advisory. The scoped patch and final checks
+resolved that failure.
 
 The dependency correction scopes `sharp` 0.35.4 to Miniflare's existing version;
 it does not downgrade Cloudflare tooling. Fresh installation and audit reported
@@ -125,6 +125,31 @@ persisted plan, resumed without intake, and correctly recovered the completed
 lab, its corrected deadline, the student's exact saved note, and the two
 remaining assignments. It kept the ambiguous quiz date unconfirmed and used
 the saved work schedule when suggesting the next action.
+
+## Final release evidence
+
+The complete implementation at `c7b8c63ba092fc6c97d6c0aa86e987409c9005d6`
+passed both [Linux quality/browser CI](https://github.com/cdionne7/semester-navigator/actions/runs/34286529198)
+and [native Windows installation/migration CI](https://github.com/cdionne7/semester-navigator/actions/runs/34286529217).
+Linux ran the full build, 75 passing Node checks with one platform skip, all 11
+Chromium journeys, typecheck, lint, and the zero-vulnerability audit. Windows
+completed portable installation, forced failure/retry, fresh-process launching,
+all six historical migration cases with zero skips, and independent student
+startup after removing the original template. Its isolated verification excludes
+the historical source fixture; the separate Windows migration step uses that
+fixture and runs those six cases explicitly.
+
+The actual Worker also returned the intended 503 provisioning guidance for both
+GET and PUT with missing migrations, without exposing query or student details.
+After migrations, the same storage path saved and reloaded data and rejected
+stale revisions. Local QA servers were stopped after testing.
+
+The versioned desktop archive contains 99 template files and no student state,
+credentials, canonical hosting ID, or Git history. Its SHA-256 is
+`9c7fd749bbdf67e38d7a12b8fb2abfa2cda17931a3fd3cc42116415d48104b59`.
+The [beta release page](https://github.com/cdionne7/semester-navigator/releases/tag/v0.2.0-beta.1)
+is the student handoff for the plugin ZIP and standalone web starter. The final
+report commit only records evidence; the tested runtime and archive are unchanged.
 
 ## Boundaries of the result
 
