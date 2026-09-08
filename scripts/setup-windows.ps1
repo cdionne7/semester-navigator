@@ -150,7 +150,12 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "Building and testing Semester Navigator..."
 $setupStage = "build_and_test"
-& npm test
+if ($isGitCheckout) {
+  & npm test
+} else {
+  Write-Host "Checking a temporary release copy so build outputs cannot alter this installation's verified source."
+  & node scripts/update-semester-navigator.mjs --root $ProjectRoot --mode canonical --verify-build yes
+}
 if ($LASTEXITCODE -ne 0) {
   throw "npm test failed with exit code $LASTEXITCODE."
 }

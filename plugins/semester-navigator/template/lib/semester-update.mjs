@@ -1,14 +1,19 @@
 import { createHash } from "node:crypto";
 import {
   copyFile,
+  cp,
   lstat,
+  mkdtemp,
   mkdir,
   readFile,
   rm,
+  symlink,
   writeFile,
 } from "node:fs/promises";
 import { dirname, isAbsolute, join, posix, relative, resolve } from "node:path";
+import { tmpdir } from "node:os";
 import { inspectStudentSite } from "./student-site-state.mjs";
+import { runNpm } from "./semester-runtime.mjs";
 
 const DEFAULT_REPOSITORY = "https://github.com/cdionne7/semester-navigator";
 const DEFAULT_RAW_ROOT = "https://raw.githubusercontent.com/cdionne7/semester-navigator/main";
@@ -238,6 +243,48 @@ export async function initializeUpdateState({ root, mode, templateRoot = root })
   return state;
 }
 
+// Verification builds regenerate platform-dependent dashboard assets and the
+// package manifest. Run them against a disposable copy, never the trusted ZIP
+// installation whose original release hashes must remain valid for retry.
+export async function verifyCanonicalRelease({ root, run = runNpm }) {
+  const projectRoot = resolve(root);
+  if (await pathExists(join(projectRoot, ".semester-navigator/profile.json"))) {
+    fail("Canonical build verification cannot run in a student workspace.");
+  }
+  const statePath = updateStatePath(projectRoot, "canonical");
+  const originalState = await readFile(statePath);
+  const state = JSON.parse(originalState.toString("utf8"));
+  validateState(state, "canonical");
+  await verifyTrackedFiles(projectRoot, state);
+  const verificationRoot = await mkdtemp(join(tmpdir(), "semester-release-verification-"));
+  try {
+    for (const [destination, expectedHash] of Object.entries(state.managed_files)) {
+      const content = await readFile(pathInside(projectRoot, destination));
+      if (sha256(content) !== expectedHash) fail(`Source changed before verification: ${destination}`);
+      const target = pathInside(verificationRoot, destination);
+      await mkdir(dirname(target), { recursive: true });
+      await writeFile(target, content);
+    }
+    await writeFile(updateStatePath(verificationRoot, "canonical"), originalState);
+    const dependencies = join(projectRoot, "node_modules");
+    if (await pathExists(dependencies)) {
+      await symlink(dependencies, join(verificationRoot, "node_modules"), process.platform === "win32" ? "junction" : "dir");
+    }
+    const portableNode = join(projectRoot, ".tools/node");
+    if (await pathExists(join(portableNode, "node.exe"))) {
+      await cp(portableNode, join(verificationRoot, ".tools/node"), { recursive: true });
+    }
+    const example = join(verificationRoot, ".openai/hosting.example.json");
+    if (await pathExists(example)) await copyFile(example, join(verificationRoot, ".openai/hosting.json"));
+    await run(verificationRoot, ["test"]);
+    if (!(await readFile(statePath)).equals(originalState)) fail("Installation tracking changed during build verification. Nothing was marked verified.");
+    await verifyTrackedFiles(projectRoot, state);
+    return { status: "build_verified", release: state.release, source_unchanged: true };
+  } finally {
+    await rm(verificationRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+  }
+}
+
 async function fetchBuffer(url, fetchImpl) {
   let response;
   try {
@@ -259,6 +306,11 @@ async function downloadRelease({ mode, rawRoot, fetchImpl, installedRelease }) {
   if (rawRoot === DEFAULT_RAW_ROOT) {
     const revision = JSON.parse((await fetchBuffer("https://api.github.com/repos/cdionne7/semester-navigator/commits/main", fetchImpl)).toString("utf8")).sha;
     if (!/^[a-f0-9]{40}$/.test(revision ?? "")) fail("The public update revision is invalid.");
+    // This exact, independently verified legacy revision predates update
+    // manifests. A newer beta must not turn its expected 404 into a setup error.
+    if (revision === LEGACY_REVISION && compareReleaseOrder(installedRelease, "2026.08.24.1") > 0) {
+      return { release: "2026.08.24.1", localNewer: true };
+    }
     rawRoot = `https://raw.githubusercontent.com/cdionne7/semester-navigator/${revision}`;
   }
   const cacheKey = encodeURIComponent(new Date().toISOString());

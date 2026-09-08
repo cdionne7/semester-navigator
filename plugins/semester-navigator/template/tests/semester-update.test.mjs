@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
 import {
@@ -11,6 +11,7 @@ import {
   updateSemesterNavigator,
   verifyLocalUpdateState,
   recoverCanonicalUpdateState,
+  verifyCanonicalRelease,
 } from "../lib/semester-update.mjs";
 
 function response(content, status = 200) {
@@ -111,6 +112,25 @@ test("an older public release cannot downgrade a newer student's assets, plan, o
   assert.match(update.message, /no downgrade was applied/);
   assert.deepEqual(requests, ["/reference/update-manifest.json"]);
   assert.deepEqual(await snapshotFiles(studentRoot), before, "all root paths and bytes, including state timestamps, must remain unchanged");
+});
+
+test("the actual pre-manifest public main cannot block or downgrade a newer beta", async (context) => {
+  const parent = await mkdtemp(join(tmpdir(), "semester-update-legacy-main-"));
+  context.after(() => rm(parent, { recursive: true, force: true }));
+  const { studentRoot, templateRoot } = await makeTrackedStudentRoot(parent);
+  await writeFile(join(templateRoot, "reference/update-manifest.json"), JSON.stringify(manifest("2026.09.08.2")));
+  await initializeUpdateState({ root: studentRoot, mode: "student", templateRoot });
+  const before = await snapshotFiles(studentRoot);
+  const requests = [];
+  const update = await updateSemesterNavigator({ root: studentRoot, mode: "student", fetchImpl: async (url) => {
+    requests.push(url);
+    assert.equal(url, "https://api.github.com/repos/cdionne7/semester-navigator/commits/main");
+    return response(JSON.stringify({ sha: "501ddd22889c080ac58e64bed7e68fe83c8a57f2" }));
+  }});
+  assert.equal(update.status, "local_newer");
+  assert.equal(update.changed_files, 0);
+  assert.equal(requests.length, 1);
+  assert.deepEqual(await snapshotFiles(studentRoot), before);
 });
 
 test("release ordering uses numeric revision components and permits the verified known legacy upgrade", async (context) => {
@@ -322,6 +342,84 @@ test("an interrupted install verifies its original baseline before being marked 
   await writeFile(join(root,"managed.txt"), "original");
   await initializeUpdateState({root,mode:"canonical"});
   assert.equal((await verifyLocalUpdateState({root,mode:"canonical"})).installation_verified,true);
+});
+
+async function canonicalVerificationFixture(context) {
+  const root = await mkdtemp(join(tmpdir(), "semester-build-verification-"));
+  context.after(() => rm(root, { recursive: true, force: true }));
+  const files = new Map([
+    ["managed.txt", "trusted release source"],
+    ["public/dashboard/index.html", "published dashboard"],
+    ["public/dashboard/assets/published.js", "published asset"],
+    [".openai/hosting.example.json", JSON.stringify({ d1: "DB", r2: null })],
+  ]);
+  const release = { ...manifest("2026.09.08.2"), canonical_files: [...files.keys(), "reference/update-manifest.json"] };
+  files.set("reference/update-manifest.json", JSON.stringify(release));
+  for (const [path, content] of files) {
+    await mkdir(dirname(join(root, path)), { recursive: true });
+    await writeFile(join(root, path), content);
+  }
+  await mkdir(join(root, "node_modules"));
+  await writeFile(join(root, "node_modules/dependency.txt"), "installed dependency");
+  await writeFile(join(root, ".openai/hosting.json"), JSON.stringify({ project_id: "must-not-copy", d1: "DB", r2: null }));
+  const state = await initializeUpdateState({ root, mode: "canonical" });
+  await writeFile(join(root, ".semester-navigator-template-state.json"), JSON.stringify({ ...state, verified: false }));
+  return root;
+}
+
+test("canonical verification isolates generated assets and manifest while retaining the trusted installed baseline", async (context) => {
+  const root = await canonicalVerificationFixture(context);
+  const before = await snapshotFiles(root);
+  let stagedRoot;
+  const result = await verifyCanonicalRelease({ root, run: async (stage, args) => {
+    stagedRoot = stage;
+    assert.notEqual(stage, root);
+    assert.deepEqual(args, ["test"]);
+    assert.equal(await readFile(join(stage, "managed.txt"), "utf8"), "trusted release source");
+    assert.equal(await readFile(join(stage, "node_modules/dependency.txt"), "utf8"), "installed dependency");
+    assert.deepEqual(JSON.parse(await readFile(join(stage, ".openai/hosting.json"), "utf8")), { d1: "DB", r2: null });
+    await writeFile(join(stage, "public/dashboard/index.html"), "platform-specific verified build");
+    await rm(join(stage, "public/dashboard/assets/published.js"));
+    await writeFile(join(stage, "public/dashboard/assets/platform-build.js"), "different platform asset");
+    await writeFile(join(stage, "reference/update-manifest.json"), "regenerated manifest");
+  } });
+  assert.equal(result.status, "build_verified");
+  assert.equal(result.source_unchanged, true);
+  assert.deepEqual(await snapshotFiles(root), before);
+  await assert.rejects(() => readFile(join(stagedRoot, "managed.txt")), /ENOENT/);
+  assert.equal((await initializeUpdateState({ root, mode: "canonical" })).verified, true);
+});
+
+test("failed isolated verification preserves source, assets, and baseline for a same-folder retry", async (context) => {
+  const root = await canonicalVerificationFixture(context);
+  const before = await snapshotFiles(root);
+  let stagedRoot;
+  await assert.rejects(() => verifyCanonicalRelease({ root, run: async (stage) => {
+    stagedRoot = stage;
+    await writeFile(join(stage, "public/dashboard/index.html"), "partial failed build");
+    await rm(join(stage, "public/dashboard/assets/published.js"));
+    await writeFile(join(stage, "reference/update-manifest.json"), "partial failed manifest");
+    throw new Error("simulated verification failure");
+  } }), /simulated verification failure/);
+  assert.deepEqual(await snapshotFiles(root), before);
+  await assert.rejects(() => readFile(join(stagedRoot, "managed.txt")), /ENOENT/);
+  assert.equal((await verifyLocalUpdateState({ root, mode: "canonical" })).installation_verified, false);
+  await verifyCanonicalRelease({ root, run: async () => {} });
+  assert.equal((await initializeUpdateState({ root, mode: "canonical" })).verified, true);
+});
+
+test("canonical verification refuses preexisting or concurrent source edits instead of blessing them", async (context) => {
+  const root = await canonicalVerificationFixture(context);
+  await writeFile(join(root, "managed.txt"), "existing local edit");
+  await assert.rejects(() => verifyCanonicalRelease({ root, run: async () => assert.fail("changed source must not run") }), /locally changed managed files/);
+  await writeFile(join(root, "managed.txt"), "trusted release source");
+  await assert.rejects(() => verifyCanonicalRelease({ root, run: async () => {
+    await writeFile(join(root, "managed.txt"), "concurrent local edit");
+  } }), /locally changed managed files/);
+  assert.equal(await readFile(join(root, "managed.txt"), "utf8"), "concurrent local edit");
+  const state = JSON.parse(await readFile(join(root, ".semester-navigator-template-state.json"), "utf8"));
+  assert.equal(state.verified, false);
+  assert.notEqual(state.managed_files["managed.txt"], createHash("sha256").update("concurrent local edit").digest("hex"));
 });
 
 test("legacy recovery compares known release blob hashes and never blesses arbitrary local changes", async (context) => {

@@ -9,6 +9,7 @@ import {
   updateSemesterNavigator,
   verifyLocalUpdateState,
   recoverCanonicalUpdateState,
+  verifyCanonicalRelease,
 } from "../lib/semester-update.mjs";
 import { runNpm, runNode } from "../lib/semester-runtime.mjs";
 
@@ -51,6 +52,11 @@ try {
     process.stdout.write(`${JSON.stringify(await verifyLocalUpdateState({ root, mode }), null, 2)}\n`);
     process.exit(0);
   }
+  if (yesNo(args["verify-build"], "verify-build", false)) {
+    if (mode !== "canonical") throw new Error("Isolated build verification is only for a canonical release.");
+    process.stdout.write(`${JSON.stringify(await verifyCanonicalRelease({ root }), null, 2)}\n`);
+    process.exit(0);
+  }
   if (yesNo(args.recover, "recover", false)) {
     if (mode !== "canonical") throw new Error("Recovery is only for a known legacy canonical installation.");
     process.stdout.write(`${JSON.stringify(await recoverCanonicalUpdateState({ root }), null, 2)}\n`);
@@ -85,7 +91,7 @@ try {
         runNode(root, ["--test", "tests/plan-model.test.mjs", "tests/plan-http.test.mjs"]);
       } else {
         runNpm(root, ["ci"]);
-        runNpm(root, ["test"]);
+        await verifyCanonicalRelease({ root });
       }
     } catch (error) {
       if (update.backup_root) {
