@@ -35,6 +35,10 @@ use `.semester-navigator/plan.json`. Read that file's actual envelope/schema
 rather than assuming it contains a bare plan. State the active student and term
 briefly. Resume its saved setup stage or the requested planning work.
 Do not ask the student to upload a tracker that a tool can already read.
+If the profile uses `schema_version: 1` or the local launcher/playbook is
+missing, read the verified legacy upgrade path in [setup](references/setup.md).
+Do not assume that resuming an old folder installs the new dashboard or that
+its seed includes the old private Site/browser's saved work.
 
 The student workspace includes a copy of this playbook at
 `.semester-navigator/playbook/`. It supports a fresh project chat even when this

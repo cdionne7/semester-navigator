@@ -75,6 +75,17 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & $powershell -NoProfile -ExecutionPolicy Bypass -Command "& $quotedLauncher -ProjectRoot $quotedRoot -Command npm -CommandArguments @('run', 'lint')"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify legacy student migration with the portable runtime
+        shell: powershell
+        run: |
+          $powershell = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"
+          $destination = $env:SEMESTER_TEST_INSTALLATION
+          $env:Path = "$env:SystemRoot\System32;$env:SystemRoot"
+          $quotedLauncher = "'" + (Join-Path $destination "scripts\run-semester.ps1").Replace("'", "''") + "'"
+          $quotedRoot = "'" + $destination.Replace("'", "''") + "'"
+          if (-not (Test-Path -LiteralPath (Join-Path $destination "reviews\fixtures\legacy-501ddd-source.json"))) { throw "The native migration fixture is missing." }
+          & $powershell -NoProfile -ExecutionPolicy Bypass -Command "& $quotedLauncher -ProjectRoot $quotedRoot -Command node -CommandArguments @('--test', 'tests/student-migration.test.mjs')"
+          if ($LASTEXITCODE -ne 0) { throw "Legacy student migration failed on Windows." }
       - name: Create an upload-only student and start without the original template
         shell: powershell
         run: |

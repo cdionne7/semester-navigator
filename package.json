@@ -60,6 +60,9 @@
   "overrides": {
     "@esbuild-kit/core-utils": {
       "esbuild": "0.28.2"
+    },
+    "miniflare@5.20260908.0-alpha": {
+      "sharp": "0.35.4"
     }
   }
 }

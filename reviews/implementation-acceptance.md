@@ -75,6 +75,13 @@ does not trigger website setup.
    emitted after signal termination. Both were reproduced locally, corrected,
    and covered by actual-process regressions. The Windows rerun verifies the
    complete portable-install and detached-student path.
+8. The legacy-format audit found that old student roots had no runtime, playbook,
+   or update state. A verified migration now uses the installed release, backs
+   up changed files, and preserves the reviewed plan and Site binding. Six
+   offline cases cover exact source verification, conflicting identity/source,
+   authoritative deletions, failed verification rollback, process interruption,
+   and retry. The actual child's old browser/Site data still needs review before
+   migrating that child's workspace.
 
 The hosted path was additionally built from a generated, isolated college
 workspace after a fresh `npm ci`. Its actual Worker and local D1 accepted browser
@@ -82,14 +89,29 @@ edits, persisted them through reload and server restart, and rejected a stale
 save. This did not deploy the canonical template or any real student's Site.
 
 Final local checks passed: `npm run lint`, `npm run typecheck`, `npm test`
-(64 passed, one native-Windows test skipped on macOS), and all 11 Chromium
+(75 passed, one native-Windows test skipped on macOS), and all 11 Chromium
 end-to-end tests. The dependency audit reported zero vulnerabilities. Native
-Windows CI is recorded below when its run completes. The Linux GitHub workflow
-passed at commit `dc68a71e6aa89a67d85c544da48b5193ffa45c6d`.
+Windows [installation and recovery CI passed](https://github.com/cdionne7/semester-navigator/actions/runs/34285203832)
+at commit `76d30e6ae58fa20d2473c21e814e8aa02f5b33b1`. Its Node suite passed
+68 checks with one platform-specific skip. The first two Windows runs found
+and drove fixes for entry-path handling, signal cleanup, and generated build
+files invalidating the installation baseline. Verification now builds in a
+disposable source copy and confirms that the installed release is unchanged.
+The Linux workflow passed at `a3a77cd4d4eb18ce82c102efa65ea081662cb03a`;
+its later run passed application and browser checks but surfaced a newly
+reported transitive `sharp` advisory. The scoped patched dependency and final
+release checks are recorded below when complete.
+
+The dependency correction scopes `sharp` 0.35.4 to Miniflare's existing version;
+it does not downgrade Cloudflare tooling. Fresh installation and audit reported
+zero vulnerabilities. Actual AVIF decoding/resizing passed with the patched
+library. A generated student workspace also built and ran its actual Worker
+and local D1: read 200, save 200 at revision 1, stale save 409, and reload kept
+completion and notes. See the [upstream advisory](https://github.com/advisories/GHSA-rgj7-g3m4-5g8c).
 
 The actual CLI registered the repository marketplace and installed
 `semester-navigator@semester-navigator` version `0.2.0` initially. The final local iteration uses
-`0.2.0+codex.20260908220424`. Its cache resolver
+`0.2.0+codex.20260908223107`. Its cache resolver
 reported `source: bundled` and `dashboard_ready: true`. A new ephemeral Codex
 session, without this review conversation, loaded that installed skill and
 returned the correct college deadline, date-only/unknown distinctions, a useful

@@ -10,6 +10,9 @@ If the current root already contains the matching student profile, use its own
 scripts and saved plan to resume or restart the dashboard. Skip template
 discovery and initial intake. The bundled playbook works without the original
 plugin or canonical repository; see “Resume a partial setup” below.
+For an older `schema_version: 1` profile, or a root missing its launcher/playbook,
+follow “Upgrade the verified legacy student folder” below before attempting to
+run missing scripts. A bootstrap resume does not upgrade old source files.
 
 The normal desktop route uses a prebuilt dashboard bundled with the
 [v0.2.0-beta.1 release](https://github.com/cdionne7/semester-navigator/releases/tag/v0.2.0-beta.1).
@@ -133,6 +136,57 @@ and delivering the requested planning result. The safe update check can return
 verified beta in that case. Do not downgrade it to the older public source. A
 network-only update failure does not block planning. Preserve private records
 and report actual conflicts.
+
+## Upgrade the verified legacy student folder
+
+The public `501ddd22889c080ac58e64bed7e68fe83c8a57f2` release created student
+folders without a local launcher or update tracking. Their private Site and
+original browser can contain newer work than `app/student-seed.json`. Do not
+create another student folder, invent a new update baseline, run canonical
+recovery against a student folder, or infer that an empty seed means no work.
+
+Use the verified installed beta template's `scripts/migrate-student.mjs`, with
+`--root` naming the existing approved student folder. Omit `--apply` for its
+read-only check. It accepts only the exact known legacy source and reports
+specific changed files or identity conflicts; other versions need review.
+The migration reads the installed bundle, so it does not depend on the default
+branch having this beta release. Provision/use the template's checked portable
+runtime on Windows as described above, then execute the migration script with
+that runtime. Do not use the old student's missing launcher for this step.
+
+Before applying, use available approved tools to recover the existing plan:
+
+1. Preserve the original browser's saved copy before reopening the old
+   dashboard. That dashboard automatically saves on load. Read the private
+   Site's `/api/plan` in its verified account when a Site exists; a response
+   contains `{plan}`. Preserve any local plan file too. Do not collect browser
+   credentials or assume the current browser has the original device copy.
+2. Review differences among the copies with the student when their recency or
+   intended facts cannot be established. The legacy format has no save
+   revision. Save the reviewed bare plan or `{plan}` response as a local JSON
+   input; keep its original student ID, name, and school. This must be the
+   complete reviewed plan, including its course/task lists. It is authoritative
+   for the new local dashboard, so removed work is not revived from the old
+   seed. All earlier local records remain in the migration backup.
+3. Show the same student/folder, recovered work count, unknown dates, and the
+   local upgrade. Obtain one confirmation if the upgrade has not already been
+   authorized. Then run the new script with `--plan-file <reviewed JSON>`,
+   `--legacy-data-reviewed yes`, and `--apply yes`.
+
+Use `--use-seed yes` instead of `--plan-file` only for an undeployed root with
+no local saved plan after tools or the student have established that its old
+browser has no newer work. Still supply `--legacy-data-reviewed yes`. If tools
+cannot recover the saved copies or resolve an identity conflict, keep the old
+folder and available planning work intact and state the one missing recovery
+step. Never set the review flag just to bypass the check.
+
+The migration preserves the old private Site binding and creates a local
+backup of all files it changes. It does not deploy, connect accounts, or claim
+the old Site is updated. Legacy relative labels such as “Today” become unknown
+deadlines until confirmed. Verify the new local dashboard's identity, imported
+work, and a saved edit after the script succeeds. If interrupted, rerun the same
+migration with the reviewed input; its recorded backup is restored before a
+retry. Do not delete the student folder to recover.
 
 ## Optional private Site
 

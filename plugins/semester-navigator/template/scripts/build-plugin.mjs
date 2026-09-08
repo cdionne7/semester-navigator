@@ -87,7 +87,7 @@ student.push(
 );
 student.push(
   ...canonical.filter((path) =>
-    /^scripts\/(bootstrap-student-site|record-student-site(-access)?|serve-student|setup-windows|run-semester|update-semester-navigator)\./.test(
+    /^scripts\/(bootstrap-student-site|migrate-student|record-student-site(-access)?|serve-student|setup-windows|run-semester|update-semester-navigator)\./.test(
       path,
     ),
   ),

@@ -14,10 +14,10 @@ Forward this one link: [Semester Navigator beta setup](https://github.com/cdionn
 It provides the desktop bundle, its checksum, and the standalone web starter.
 Use the matching prompt below and attach one syllabus or assignment.
 
-This entry targets **v0.2.0-beta.1**. Until that release is published, its page
-and downloads are unavailable. Do not substitute the repository's `main`
-branch, the old Windows installer, or an unpublished draft release. The beta
-source and instructions must travel together.
+This entry targets **v0.2.0-beta.1**. If its page or downloads are unavailable,
+do not substitute the repository's `main` branch, the old Windows installer,
+or an unpublished draft release. The beta source and instructions must travel
+together.
 
 ## Start on your computer
 
