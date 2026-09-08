@@ -35,10 +35,14 @@ will preserve the tracker, account boundaries, or completion history.
 If the student wants a private dashboard and ChatGPT Work plus Sites tools are
 available, use that hosted environment and the available Sites instructions.
 Do not require a Windows install, local root, browser extension, or Ctrl+O.
-Read the public repository as source only; create fresh student-specific source
-and storage in the hosted workspace, with no canonical hosting project ID or
-prototype coursework. Use the supplied course data and current application
-schema. Obtain approval for the private Site and verify its project, durable
+Read the [matching v0.2.0-beta.1 application source](https://github.com/cdionne7/semester-navigator/tree/v0.2.0-beta.1)
+or that release bundle as source only; the default branch may still contain
+the older implementation. Create fresh student-specific source and storage in
+the hosted workspace, with no canonical hosting project ID or prototype
+coursework. If the matching source is unavailable, keep the tracker usable and
+report the missing release instead of substituting an older application. Use
+the supplied course data and current application schema. Obtain approval for
+the private Site and verify its project, durable
 storage, intended account, and access before claiming it is ready.
 If the hosted build uses this application's manifest, initialize a fresh
 `.openai/hosting.json` only for that approved Site, with `d1: "DB"`, `r2: null`,

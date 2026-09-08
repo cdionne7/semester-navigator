@@ -314,10 +314,12 @@ async function main() {
       process.once(signal, () => result.server.close(() => process.exit(0)));
   }
 }
+// Resolve both paths so Windows short names and directory aliases still count
+// as direct execution, while importing this module only exposes the server API.
 if (
   process.argv[1] &&
   (await realpath(resolve(process.argv[1])).catch(() => "")) ===
-    fileURLToPath(import.meta.url)
+    (await realpath(fileURLToPath(import.meta.url)))
 )
   main().catch((error) => {
     console.error(`Semester Navigator could not start: ${error.message}`);

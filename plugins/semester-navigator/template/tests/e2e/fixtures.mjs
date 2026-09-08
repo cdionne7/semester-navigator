@@ -24,7 +24,7 @@ export const test=base.extend({
       let stderr='';child.stderr.on('data',chunk=>stderr+=chunk);reader=createInterface({input:child.stdout});
       const ready=await Promise.race([once(reader,'line').then(([line])=>JSON.parse(line)),once(child,'exit').then(([code])=>{throw new Error(`Student runtime exited ${code}: ${stderr}`)})]);
       await provide({root,seed,url:ready.url});
-    } finally {if(child && child.exitCode===null){child.kill('SIGTERM');await once(child,'exit');}reader?.close();await rm(root,{recursive:true,force:true});}
+    } finally {if(child && child.exitCode===null && child.signalCode===null){const exited=once(child,'exit');child.kill('SIGTERM');await exited;}reader?.close();await rm(root,{recursive:true,force:true});}
   },
 });
 export {expect};

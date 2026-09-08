@@ -1,6 +1,6 @@
 {
   "name": "semester-navigator",
-  "version": "0.2.0",
+  "version": "0.2.0+codex.20260908220424",
   "description": "Set up a private semester plan from course materials, choose the next task, and get source-based study and writing support.",
   "author": {
     "name": "Semester Navigator"

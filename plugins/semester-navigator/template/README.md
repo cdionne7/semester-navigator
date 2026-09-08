@@ -8,54 +8,52 @@ This public repository contains the application and plugin. Student work belongs
 in a separate private workspace. The canonical template must never be deployed
 as a student's Site.
 
+## Start here
+
+Forward this one link: [Semester Navigator beta setup](https://github.com/cdionne7/semester-navigator/releases/tag/v0.2.0-beta.1).
+It provides the desktop bundle, its checksum, and the standalone web starter.
+Use the matching prompt below and attach one syllabus or assignment.
+
+This entry targets **v0.2.0-beta.1**. Until that release is published, its page
+and downloads are unavailable. Do not substitute the repository's `main`
+branch, the old Windows installer, or an unpublished draft release. The beta
+source and instructions must travel together.
+
 ## Start on your computer
 
-Use a local Codex task in the
-[ChatGPT desktop app](https://learn.chatgpt.com/docs/windows/windows-app).
-The desktop app includes local project work; an ordinary web GPT conversation
-does not provide access to files on your computer.
-
-Install the versioned `semester-navigator-plugin-v0.2.0.zip` bundle from
-[GitHub Releases](https://github.com/cdionne7/semester-navigator/releases) when
-published, then start a new task and attach your syllabus. The bundle includes
-the skill, setup scripts, application template, and prebuilt dashboard. A source
-checkout also contains the repository marketplace for development.
-
-Paste this into a local desktop task to have the assistant handle installation:
+Open a local Codex task in the
+[ChatGPT desktop app](https://learn.chatgpt.com/docs/windows/windows-app),
+attach your syllabus, and paste:
 
 ```text
-Install Semester Navigator from the latest published semester-navigator-plugin
-ZIP at https://github.com/cdionne7/semester-navigator/releases. Inspect the
-release and extract the bundle into an appropriate local plugin folder. Use
-available desktop tools to register its marketplace and install its plugin;
-verify the installed skill in a new task. Do not require Git, GitHub CLI,
-GitHub sign-in, administrator access, or system-wide software. If no published
-bundle or installation tool is available, explain that exact limit and use the
-bundled skill directly when local tools permit, or the repository's web starter.
+Set up Semester Navigator beta v0.2.0-beta.1 from:
+https://github.com/cdionne7/semester-navigator/releases/tag/v0.2.0-beta.1
+
+First read my syllabus, show my next confirmed deadline and one thing I can do
+today. Inspect that exact published release. Download its
+semester-navigator-plugin-v0.2.0.zip and matching .zip.sha256, verify the
+checksum, and extract the bundle. Use available local tools to register its
+marketplace and add the plugin. Do not require Git, GitHub CLI, GitHub sign-in,
+administrator access, or system-wide software.
+
+Use the installed skill, or read the extracted plugin's SKILL.md if the new
+skill is not loaded in this task. Complete the approved student setup and
+verify my saved dashboard. Resume an existing setup if present. If the app
+requires a new task or folder selection, give me the exact folder and one
+ready-to-copy resume prompt. Keep optional connections, reminders, and hosting
+for later. If local tools are unavailable, use the release's web-starter.md.
 ```
 
-A release is not available merely because the repository exists. If the Releases
-page has no published bundle, use the web starter below or the checked-out
-marketplace with an assistant; do not assume a private draft is downloadable.
-
-Once the plugin is available, send one prompt:
-
-```text
-Use Semester Navigator to set up my semester from my syllabus. If I already
-started, resume my saved setup. First show my next confirmed deadline and one
-thing I can do today. Do the technical work and save my progress. Keep optional
-connections, reminders, and hosting for later.
-```
-
-The assistant asks only for missing student/course facts and confirms the folder
-and plan before saving. It creates or resumes a private student workspace,
-opens its local dashboard, and verifies saving. Windows setup can use a checked
-portable runtime inside the project. The prebuilt route does not require
-installing application dependencies or building the app on the student's machine.
+The assistant handles the technical steps. The bundle contains the skill,
+setup scripts, application template, and prebuilt dashboard. It asks only for
+missing facts and confirms the student, folder, and plan before saving.
+Windows can use a verified portable runtime inside the project; this route
+does not require installing application dependencies or building the app on
+the student's machine.
 
 The local dashboard works on that computer while its server is running. A later
-chat can reopen the project and restart it using the saved instructions. A
-private hosted Site is optional for access away from that computer.
+chat can reopen the student project and restart it using the saved instructions.
+A private hosted Site is optional for access away from that computer.
 
 [Windows details and legacy recovery](reference/windows-codex-bootstrap.md)
 are for the assistant to execute, not a student command checklist.
@@ -65,18 +63,25 @@ are for the assistant to execute, not a student command checklist.
 Open ChatGPT, preferably Work when available, attach one syllabus, and paste:
 
 ```text
-Help me set up Semester Navigator from this syllabus. First show my nearest
-confirmed deadline and one useful thing I can do today. Ask only for missing
-information, one question at a time. Keep unknown dates and grades unknown.
-Save a compact tracker I can reuse. I am using ChatGPT on the web, so do not ask
-me to run commands or open local folders. Keep account connections and reminders
-optional. Help me create a private Site later only if the available tools support it.
+Use this Semester Navigator web starter with my attached syllabus:
+https://raw.githubusercontent.com/cdionne7/semester-navigator/v0.2.0-beta.1/reference/web-starter.md
+
+First show my nearest confirmed deadline and one useful thing I can do today.
+Ask only for missing information. Keep unknown dates and grades unknown. Save
+my reusable tracker and importable semester-plan.json using the starter's
+format, and link the actual files. I am using ChatGPT on the web, so do not
+ask me to run commands or open local folders. Keep account connections,
+reminders, and a private Site optional. If you cannot read the starter link,
+begin from the syllabus and tell me to attach the downloaded web-starter.md.
 ```
 
-For the full portable tracker/import instructions, attach or paste the
-[standalone web starter](reference/web-starter.md). It needs no custom GPT or
-plugin installation. ChatGPT can provide a saved artifact or downloadable plan;
-it must identify where the tracker was actually saved.
+If needed, download [web-starter.md](https://github.com/cdionne7/semester-navigator/releases/download/v0.2.0-beta.1/web-starter.md)
+from the same beta page and attach it to ChatGPT. It needs no custom GPT or
+plugin installation. The [repository copy](reference/web-starter.md) documents
+the complete portable tracker/import format. ChatGPT must state where the
+tracker was actually saved. An ordinary web chat does not provide access to
+files on your computer; when file creation is unavailable, the starter provides
+reusable tracker text and JSON inline.
 
 The repository marketplace is not a claim that Semester Navigator is published
 in the universal ChatGPT plugin directory. Supported public-directory plugins

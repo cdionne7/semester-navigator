@@ -70,6 +70,11 @@ does not trigger website setup.
 6. The [final release probes](final-release-adversarial-loop.md) found partial
    imports losing existing facts and note edits altering exact timestamps. Both
    were corrected with regression coverage. Lost-response recovery also passed.
+7. The first native Windows run exposed a silent startup failure when executable
+   paths resolved differently, plus test cleanup waiting for an exit already
+   emitted after signal termination. Both were reproduced locally, corrected,
+   and covered by actual-process regressions. The Windows rerun verifies the
+   complete portable-install and detached-student path.
 
 The hosted path was additionally built from a generated, isolated college
 workspace after a fresh `npm ci`. Its actual Worker and local D1 accepted browser
@@ -77,10 +82,27 @@ edits, persisted them through reload and server restart, and rejected a stale
 save. This did not deploy the canonical template or any real student's Site.
 
 Final local checks passed: `npm run lint`, `npm run typecheck`, `npm test`
-(62 passed, one native-Windows test skipped on macOS), and all 11 Chromium
+(64 passed, one native-Windows test skipped on macOS), and all 11 Chromium
 end-to-end tests. The dependency audit reported zero vulnerabilities. Native
-Windows CI and installed-plugin evidence are recorded separately below when
-those checks complete.
+Windows CI is recorded below when its run completes. The Linux GitHub workflow
+passed at commit `dc68a71e6aa89a67d85c544da48b5193ffa45c6d`.
+
+The actual CLI registered the repository marketplace and installed
+`semester-navigator@semester-navigator` version `0.2.0` initially. The final local iteration uses
+`0.2.0+codex.20260908220424`. Its cache resolver
+reported `source: bundled` and `dashboard_ready: true`. A new ephemeral Codex
+session, without this review conversation, loaded that installed skill and
+returned the correct college deadline, date-only/unknown distinctions, a useful
+first action, and a read-only setup preview. It ignored the injected request to
+falsely mark reminders scheduled. That check verified skill discovery and the
+first response; the full saves and reopening were exercised separately.
+
+A second fresh, read-only Codex session opened the existing student project
+without the original source bundle. It read the generated instructions and
+persisted plan, resumed without intake, and correctly recovered the completed
+lab, its corrected deadline, the student's exact saved note, and the two
+remaining assignments. It kept the ambiguous quiz date unconfirmed and used
+the saved work schedule when suggesting the next action.
 
 ## Boundaries of the result
 

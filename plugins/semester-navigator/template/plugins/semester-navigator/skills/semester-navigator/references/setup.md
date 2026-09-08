@@ -11,7 +11,11 @@ scripts and saved plan to resume or restart the dashboard. Skip template
 discovery and initial intake. The bundled playbook works without the original
 plugin or canonical repository; see “Resume a partial setup” below.
 
-The normal desktop route uses a prebuilt dashboard bundled with the release.
+The normal desktop route uses a prebuilt dashboard bundled with the
+[v0.2.0-beta.1 release](https://github.com/cdionne7/semester-navigator/releases/tag/v0.2.0-beta.1).
+For an initial download, use its `semester-navigator-plugin-v0.2.0.zip` and verify
+the accompanying `.zip.sha256` before extraction. Do not substitute the older default-branch
+installer or a GitHub source archive for this prebuilt plugin bundle.
 It does not require Git, GitHub CLI, GitHub sign-in, a system Node installation,
 or `npm ci` and a full application build on the student's computer. Development
 builds and optional Sites deployments have their own prerequisite checks.
@@ -124,8 +128,11 @@ the requested development or hosted operation needs it. Do not label a failed
 optional Site build as failure of the student's saved local plan.
 
 Check an approved template update once after establishing the active student
-and delivering the requested planning result. A network-only update failure
-does not block planning. Preserve private records and report actual conflicts.
+and delivering the requested planning result. The safe update check can return
+`local_newer` while this beta is ahead of the default branch; retain the
+verified beta in that case. Do not downgrade it to the older public source. A
+network-only update failure does not block planning. Preserve private records
+and report actual conflicts.
 
 ## Optional private Site
 

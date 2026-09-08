@@ -1,15 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { request as httpRequest } from 'node:http';
 import { once } from 'node:events';
 import { createInterface } from 'node:readline';
 import { normalizePlan } from '../lib/plan-model.mjs';
 import { startStudentServer } from '../scripts/serve-student.mjs';
 const script=resolve('scripts/serve-student.mjs');
+const exec=promisify(execFile);
 async function fixture(context) {
  const root=await mkdtemp(join(tmpdir(),'semester-http-test-'));context.after(()=>rm(root,{recursive:true,force:true}));
  for(const dir of ['.semester-navigator','app','public/dashboard/assets'])await mkdir(join(root,dir),{recursive:true});
@@ -20,14 +22,37 @@ async function fixture(context) {
  await writeFile(join(root,'public/dashboard/assets/test.js'),'window.fixture=true;');
  return {root,plan};
 }
+function childStopper(child,reader) {
+ let stopping;
+ return ()=>stopping??=(async()=>{
+  if(child.exitCode===null && child.signalCode===null){
+   const exited=once(child,'exit');child.kill('SIGTERM');await exited;
+  }
+  reader.close();
+ })();
+}
 async function childServer(root,context) {
  const child=spawn(process.execPath,[script,'--root',root,'--port','0'],{stdio:['ignore','pipe','pipe']});let stderr='';child.stderr.on('data',d=>stderr+=d);
  const reader=createInterface({input:child.stdout});
  const ready=await Promise.race([once(reader,'line').then(([line])=>JSON.parse(line)),once(child,'exit').then(([code])=>{throw new Error(`Server exited ${code}: ${stderr}`)}),new Promise((_,reject)=>{const timer=setTimeout(()=>reject(new Error('Server startup timeout')),10000);timer.unref()})]);
- const stop=async()=>{if(child.exitCode===null){child.kill('SIGTERM');await once(child,'exit');}reader.close();};context.after(stop);
+ const stop=childStopper(child,reader);context.after(stop);
  return {...ready,stop};
 }
 const put=(url,input,headers={})=>fetch(`${url}/api/plan`,{method:'PUT',headers:{'content-type':'application/json',...headers},body:JSON.stringify(input)});
+test('direct server check runs when the entry path is a preserved directory alias',async context=>{
+ const {root,plan}=await fixture(context);const alias=join(root,'source-alias');
+ await symlink(resolve('.'),alias,process.platform==='win32'?'junction':'dir');
+ const result=await exec(process.execPath,['--preserve-symlinks-main',join(alias,'scripts/serve-student.mjs'),'--root',root,'--check'],{timeout:10000});
+ assert.ok(result.stdout.trim(),'The direct --check command exited without its required JSON result.');
+ const checked=JSON.parse(result.stdout);assert.equal(checked.ready,true);assert.equal(checked.profileId,plan.profileId);
+});
+test('child cleanup returns on repeated calls after a signal-terminated process already exited',{timeout:5000},async context=>{
+ const child=spawn(process.execPath,['-e','setInterval(()=>{},1000)'],{stdio:'ignore'});
+ let closeCount=0;const stop=childStopper(child,{close(){closeCount++;}});context.after(stop);
+ await once(child,'spawn');const exited=once(child,'exit');child.kill('SIGKILL');await exited;
+ assert.equal(child.exitCode,null);assert.equal(child.signalCode,'SIGKILL');
+ await Promise.all([stop(),stop()]);assert.equal(closeCount,1);
+});
 test('real local server saves, rejects competing revisions, survives restart, and imports changed seeds',async context=>{
  const {root,plan}=await fixture(context);let runtime=await childServer(root,context);
  assert.match(await (await fetch(runtime.url)).text(),/Student dashboard/);

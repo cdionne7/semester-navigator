@@ -8,6 +8,11 @@ import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 const exec=promisify(execFile);
+async function execJson(script,args,options) {
+  const result=await exec(process.execPath,[script,...args],{timeout:30000,...options});
+  assert.ok(result.stdout.trim(),`${script} exited without its required JSON result. stderr: ${result.stderr}`);
+  return JSON.parse(result.stdout);
+}
 
 test('published ZIP boots two independent students after its source bundle is removed', async context => {
   const temporary=await mkdtemp(join(tmpdir(),'semester-release-'));
@@ -32,14 +37,14 @@ test('published ZIP boots two independent students after its source bundle is re
   assert.ok(count>50);
   const marketplace=join(temporary,'semester-navigator');
   const plugin=join(marketplace,'plugins/semester-navigator');
-  const found=JSON.parse((await exec(process.execPath,[join(plugin,'scripts/resolve-template.mjs')],{cwd:temporary})).stdout);
+  const found=await execJson(join(plugin,'scripts/resolve-template.mjs'),[],{cwd:temporary});
   assert.equal(found.source,'bundled');
   const roots=[];
   for(const [id,level] of [['avery-college','college'],['jordan-highschool','high-school']]) {
     const root=join(temporary,id);roots.push(root);
     const plan={profileId:id,name:id,school:'Synthetic school',semester:'Fall 2026',educationLevel:level,timezone:'America/New_York',courses:[{id:'science',name:'Science'}],tasks:[{id:'lab',courseId:'science',title:'Lab report',dueAt:null,notes:'Date not supplied'}]};
     const intake=join(temporary,id+'.json');await writeFile(intake,JSON.stringify({schema_version:1,verified:true,plan}));
-    const result=JSON.parse((await exec(process.execPath,[join(found.template_root,'scripts/bootstrap-student-site.mjs'),'--student-root',root,'--profile-id',id,'--display-name',id,'--school',plan.school,'--semester',plan.semester,'--timezone',plan.timezone,'--age-eligible','yes','--intake-file',intake],{cwd:temporary})).stdout);
+    const result=await execJson(join(found.template_root,'scripts/bootstrap-student-site.mjs'),['--student-root',root,'--profile-id',id,'--display-name',id,'--school',plan.school,'--semester',plan.semester,'--timezone',plan.timezone,'--age-eligible','yes','--intake-file',intake],{cwd:temporary});
     assert.equal(result.prepared,false);
     const saved=JSON.parse(await readFile(join(root,'app/student-seed.json'),'utf8'));assert.equal(saved.educationLevel,level);assert.equal(saved.tasks[0].dueAt,null);
     await assert.rejects(()=>access(join(root,'.openai/hosting.json')));
@@ -50,7 +55,7 @@ test('published ZIP boots two independent students after its source bundle is re
   }
   await rename(marketplace,marketplace+'-unavailable');
   for(const root of roots) {
-    const result=JSON.parse((await exec(process.execPath,[join(root,'scripts/serve-student.mjs'),'--root',root,'--check'],{cwd:resolve(root)})).stdout);
+    const result=await execJson(join(root,'scripts/serve-student.mjs'),['--root',root,'--check'],{cwd:resolve(root)});
     assert.equal(result.ready,true);
   }
 });

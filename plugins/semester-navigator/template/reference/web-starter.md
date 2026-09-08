@@ -1,5 +1,6 @@
 # Semester Navigator web starter
 
+This starter accompanies [Semester Navigator v0.2.0-beta.1](https://github.com/cdionne7/semester-navigator/releases/tag/v0.2.0-beta.1).
 Use this file without a plugin. In ChatGPT on the web, start a Work task when
 available, attach this file and one syllabus or assignment prompt, and say:
 “Use this starter to set up my semester.” Ordinary chat can still produce a
@@ -114,8 +115,10 @@ must be ordinary HTTP(S) links without credentials. An uploaded syllabus is a
 `manual` source; it is not a connected LMS. If no reminders were requested, use
 an empty reminder list.
 
-The current authoritative schema is the public repository's
-[plan model](https://github.com/cdionne7/semester-navigator/blob/main/lib/plan-model.mjs).
+The schema for this starter is the beta release's
+[plan model](https://github.com/cdionne7/semester-navigator/blob/v0.2.0-beta.1/lib/plan-model.mjs).
+Use that version when creating or importing this beta's artifacts; the default
+repository branch may still contain an older implementation.
 If a student provides a newer dashboard export, preserve its profile ID and
 recognized fields, including known course/task facts, grading denominators,
 and finalization flags.
@@ -162,6 +165,9 @@ If the student requests a private website, first check available ChatGPT Work
 and Sites tools. Explain the confirmed access/plan limitation if unavailable and
 keep the tracker usable. If available, use a fresh student-specific hosted
 workspace, private owner-only audience, and durable student-specific storage.
+Use the [matching beta application source](https://github.com/cdionne7/semester-navigator/tree/v0.2.0-beta.1),
+or its release bundle, instead of the repository default branch. If that version
+is unavailable, keep the tracker usable and report the missing source.
 Do not require a local computer or reuse the template's hosting ID. Verify the
 actual Site URL, intended account, privacy, imported plan, and persistence before
 calling the Site ready. Never make private coursework public as a workaround.
