@@ -1,0 +1,23 @@
+export type Theme = 'light'|'dark';
+export type GradeComponent = {id:string;title:string;weight:number;score:number|null;possible:number;finalized:boolean};
+export type Resource = {id:string;title:string;url:string;kind:string};
+export type Course = {id:string;name:string;instructor:string;officeHours:string;grade:string;status:'On track'|'Needs draft'|'Needs attention';next:string;completed:number;total:number;goalGrade:number|null;resources:Resource[];gradingComponents:GradeComponent[]};
+export type Task = {id:string;courseId:string;course:string;title:string;dueAt:string|null;when:string;minutes:number;state:'now'|'next'|'done';reason:string;sourceUrl:string;rubric:string;notes:string;priority:'normal'|'high'};
+export type Source = {id:string;title:string;url:string;type:string;status:'not-connected'|'manual'|'connected'|'needs-sign-in';lastChecked:string|null;verified:boolean;verificationNote:string};
+export type Reminder = {id:string;title:string;schedule:string;enabled:boolean;status:'plan-only'|'scheduled'|'paused';provider:'chatgpt'|'calendar'|'none';toolId:string|null;verifiedAt:string|null};
+export type Plan = {schemaVersion:2;revision:number;seedRevision:string;profileId:string;name:string;school:string;theme:Theme;workHours:string;refreshedAt:string;timezone:string;semester:string;educationLevel:'college'|'high-school'|'other';accentColor:string;courses:Course[];tasks:Task[];sources:Source[];reminders:Reminder[]};
+export type PlanRow = {profileId:string;payload:string;revision:number;seedPayload:string|null};
+export type Persistence = {read(profileId:string):Promise<PlanRow|null>;write(row:PlanRow,baseRevision:number,isNew:boolean):Promise<boolean>};
+export class PlanError extends Error {status:number;constructor(message:string,status?:number)}
+export function normalizePlan(raw:unknown,expectedProfileId?:string):Plan;
+export function validatePlan(raw:unknown,expectedProfileId?:string):Plan;
+export function normalizeDueAt(value:unknown,label?:string):string|null;
+export function mergeImportedPlan(current:unknown,incoming:unknown,baseline?:unknown):Plan;
+export function tasksForView(plan:unknown,view:string,now?:Date|string|number):Task[];
+export function dateInTimezone(now?:Date|string|number,zone?:string):string;
+export function formatDue(taskOrDueAt:Task|string|null,zone?:string,now?:Date|string|number):string;
+export function getCourseHealth(plan:unknown,courseId:string,now?:Date|string|number):{status:'On track'|'Needs attention'|'Missing information';reason:string;completed:number;total:number;overdue:number;unknownDeadlines:number};
+export function gradeSummary(course:Course):{current:number|null;goal:number|null;remainingWeight:number|null;neededOnRemaining:number|null;warnings:string[]};
+export function suggestStudyBlocks(plan:unknown,now?:Date|string|number):{blocks:Array<{taskId:string;title:string;date:string;start:null;end:null;minutes:number;reason:string}>;unscheduled:Array<{taskId:string;title:string;reason:string}>;limitations:string[]};
+export function seedFingerprint(raw:unknown):string;
+export function createPlanService(seed:unknown,persistence:Persistence):{load():Promise<{plan:Plan;revision:number}>;save(input:unknown):Promise<{plan:Plan;revision:number}>};

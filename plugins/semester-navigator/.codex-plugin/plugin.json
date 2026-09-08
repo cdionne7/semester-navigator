@@ -1,0 +1,18 @@
+{
+  "name": "semester-navigator",
+  "version": "0.2.0",
+  "description": "Set up a private semester plan from course materials, choose the next task, and get source-based study and writing support.",
+  "author": {
+    "name": "Semester Navigator"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Semester Navigator",
+    "shortDescription": "Set up your semester and choose your next task.",
+    "longDescription": "Import course materials, save a student workspace, and plan the next useful action. Browser connections, verified reminders, and private Sites are optional. Includes a separate browser-only starter.",
+    "developerName": "Semester Navigator",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Use Semester Navigator to set up my semester from my syllabus and show what I should do next."
+  }
+}

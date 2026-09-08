@@ -1,0 +1,38 @@
+import {test,expect,openDashboard,saved,readPlan} from './fixtures.mjs';
+
+test('unknown effort stays unknown, mistaken work can be removed, and Undo restores the full class record',async({page,request,workspace})=>{
+  await openDashboard(page,workspace);
+  const initial=await readPlan(request,workspace);
+  initial.plan.tasks[0].minutes=0;
+  initial.plan.tasks[0].notes='Keep the source explanation, even without an effort estimate.';
+  initial.plan.courses[0].grade='88%';
+  initial.plan.courses[0].goalGrade=85;
+  initial.plan.courses[0].gradingComponents=[{id:'labs',title:'Labs',weight:50,score:88,possible:100,finalized:false},{id:'exam',title:'Final exam',weight:50,score:null,possible:100,finalized:false}];
+  initial.plan.courses[0].resources=[{id:'course-resource',title:'Course reading',url:'https://example.edu/reading',kind:'course'}];
+  initial.plan.tasks.push({...initial.plan.tasks[0],id:'retained-draft',title:'Annotated draft',dueAt:'2026-09-10',rubric:'Use two actual source passages and explain their relevance.',notes:'My paragraph notes must survive removing and restoring this class.'});
+  const seeded=await request.put(workspace.url+'/api/plan',{data:{plan:initial.plan,baseRevision:initial.revision}});expect(seeded.status()).toBe(200);
+  await page.reload();await saved(page);await page.getByRole('button',{name:'All work',exact:true}).click();
+  await expect(page.locator('.priority')).toContainText('ESTIMATE NEEDED');
+  await expect(page.locator('.task-list')).not.toContainText(/\b0\s*min\b/i);
+  await expect(page.locator('.task-list').getByText(/Estimate needed/)).toHaveCount(2);
+  const first=page.locator('.task-list li').filter({has:page.getByRole('heading',{name:'Problem set',exact:true})});
+  await first.getByRole('button',{name:'Edit',exact:true}).click();
+  const effort=page.getByLabel('Estimated minutes',{exact:true});await expect(effort).toHaveValue('');await expect(effort).not.toHaveAttribute('required','');
+  await page.getByRole('textbox',{name:'Your notes',exact:true}).fill('Only my note changed; the effort is still unknown.');
+  await page.getByRole('button',{name:'Save assignment',exact:true}).click();await saved(page);
+  expect((await readPlan(request,workspace)).plan.tasks.find(t=>t.id==='homework').minutes).toBe(0);
+  await first.getByRole('button',{name:'Edit',exact:true}).click();
+  const [removeMessage]=await Promise.all([page.waitForEvent('dialog').then(async dialog=>{const message=dialog.message();await dialog.accept();return message;}),page.getByRole('button',{name:'Remove assignment',exact:true}).click()]);
+  expect(removeMessage).toBe('Remove Problem set from this plan?');await saved(page);
+  await page.reload();await saved(page);await page.getByRole('button',{name:'All work',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Problem set',exact:true})).toHaveCount(0);
+  const beforeClassRemoval=await readPlan(request,workspace);expect(beforeClassRemoval.plan.tasks).toHaveLength(1);expect(beforeClassRemoval.plan.tasks[0].id).toBe('retained-draft');
+  await page.getByRole('button',{name:'Edit class',exact:true}).click();
+  const [classMessage]=await Promise.all([page.waitForEvent('dialog').then(async dialog=>{const message=dialog.message();await dialog.accept();return message;}),page.getByRole('button',{name:'Remove class',exact:true}).click()]);
+  expect(classMessage).toContain('Calculus');expect(classMessage).toMatch(/1 assignments?/);await saved(page);
+  const removed=await readPlan(request,workspace);expect(removed.plan.courses).toEqual([]);expect(removed.plan.tasks).toEqual([]);
+  await page.getByRole('button',{name:'Undo removal',exact:true}).click();await saved(page);
+  const restored=await readPlan(request,workspace);expect(restored.plan.courses).toEqual(beforeClassRemoval.plan.courses);expect(restored.plan.tasks).toEqual(beforeClassRemoval.plan.tasks);
+  await page.reload();await saved(page);
+  const reloaded=await readPlan(request,workspace);expect(reloaded.plan.courses[0].grade).toBe('88%');expect(reloaded.plan.courses[0].gradingComponents[0].finalized).toBe(false);expect(reloaded.plan.tasks[0].rubric).toBe('Use two actual source passages and explain their relevance.');expect(reloaded.plan.tasks[0].notes).toBe('My paragraph notes must survive removing and restoring this class.');
+});
