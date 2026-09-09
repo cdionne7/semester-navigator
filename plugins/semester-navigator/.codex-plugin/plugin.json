@@ -1,0 +1,18 @@
+{
+  "name": "semester-navigator",
+  "version": "0.3.0+codex.20260909155047",
+  "description": "Connect school sources with guided setup, save a private semester plan, and get source-based study and writing support.",
+  "author": {
+    "name": "Semester Navigator"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Semester Navigator",
+    "shortDescription": "Connect your school and see what needs your attention.",
+    "longDescription": "ChatGPT guides school-account and browser connections, checks classes and coursework, and builds a private dashboard with visible source coverage. Resume interrupted setup, review work against rubrics, and enable verified reminders when available. Includes an upload-based web starter.",
+    "developerName": "Semester Navigator",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Use Semester Navigator to set up my semester. Ask me questions one at a time and help me connect my school accounts."
+  }
+}
