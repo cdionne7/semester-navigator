@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { createServer } from "node:http";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { tmpdir } from "node:os";
 import test from "node:test";
 import {
@@ -79,6 +82,34 @@ async function snapshotFiles(root) {
   }
   return files;
 }
+
+test("the student update CLI honors an exact release source instead of silently using main", async (context) => {
+  const parent = await mkdtemp(join(tmpdir(), "semester-update-cli-tag-"));
+  context.after(() => rm(parent, { recursive: true, force: true }));
+  const { studentRoot } = await makeTrackedStudentRoot(parent);
+  const requested = [];
+  const files = new Map([
+    ["/release-tag/reference/update-manifest.json", JSON.stringify(manifest("2026.09.09.1"))],
+    ["/release-tag/managed.txt", "pinned release contents\n"],
+  ]);
+  const server = createServer((request, response) => {
+    const pathname = new URL(request.url, "http://localhost").pathname;
+    requested.push(pathname);
+    response.writeHead(files.has(pathname) ? 200 : 404);
+    response.end(files.get(pathname) ?? "not found");
+  });
+  await new Promise((resolve, reject) => { server.once("error", reject); server.listen(0, "127.0.0.1", resolve); });
+  context.after(() => new Promise(resolve => server.close(resolve)));
+  const result = await promisify(execFile)(process.execPath, [
+    resolve("scripts/update-semester-navigator.mjs"), "--root", studentRoot,
+    "--mode", "student", "--raw-root", `http://127.0.0.1:${server.address().port}/release-tag`,
+    "--verify", "no", "--allow-offline", "no",
+  ], { timeout: 30000 });
+  assert.equal(JSON.parse(result.stdout).status, "updated");
+  assert.deepEqual(requested.sort(), [...files.keys()].sort());
+  assert.equal(await readFile(join(studentRoot, "managed.txt"), "utf8"), "pinned release contents\n");
+  assert.equal(await readFile(join(studentRoot, "chatgpt.md"), "utf8"), "Private student context");
+});
 
 test("an older public release cannot downgrade a newer student's assets, plan, or update state", async (context) => {
   const parent = await mkdtemp(join(tmpdir(), "semester-update-no-downgrade-"));

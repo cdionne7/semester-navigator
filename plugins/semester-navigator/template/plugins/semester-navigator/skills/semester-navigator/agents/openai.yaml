@@ -1,4 +1,4 @@
 interface:
   display_name: "Semester Navigator"
-  short_description: "Set up a semester and choose your next task"
-  default_prompt: "Use $semester-navigator to set up my semester from my syllabus and show what I should do next."
+  short_description: "Connect your school and plan your next task"
+  default_prompt: "Use $semester-navigator to set up my semester. Ask me questions one at a time and help me connect my school accounts."

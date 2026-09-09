@@ -14,7 +14,7 @@ async function execJson(script,args,options) {
   return JSON.parse(result.stdout);
 }
 
-test('published ZIP boots two independent students after its source bundle is removed', async context => {
+test('release ZIP boots two independent students after its source bundle is removed', async context => {
   const temporary=await mkdtemp(join(tmpdir(),'semester-release-'));
   context.after(()=>rm(temporary,{recursive:true,force:true}));
   const version=JSON.parse(await readFile('package.json','utf8')).version;

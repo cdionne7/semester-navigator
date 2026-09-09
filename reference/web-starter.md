@@ -1,6 +1,6 @@
 # Semester Navigator web starter
 
-This starter accompanies [Semester Navigator v0.2.0-beta.1](https://github.com/cdionne7/semester-navigator/releases/tag/v0.2.0-beta.1).
+This starter accompanies [Semester Navigator v0.3.0-beta.1](https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.0-beta.1).
 Use this file without a plugin. In ChatGPT on the web, start a Work task when
 available, attach this file and one syllabus or assignment prompt, and say:
 “Use this starter to set up my semester.” Ordinary chat can still produce a
@@ -99,6 +99,22 @@ type Source = {
   status: "manual" | "not-connected" | "connected" | "needs-sign-in";
   lastChecked: string | null; // actual ISO retrieval timestamp, if available
   verified: boolean; verificationNote: string;
+  provider?: "unknown" | "google-drive" | "google-classroom" | "canvas" |
+    "brightspace" | "schoology" | "moodle" | "blackboard" | "powerschool" | "other";
+  accessMode?: "none" | "manual" | "connector" | "browser";
+  connection?: {
+    state: "unverified" | "verified" | "needs-sign-in" | "blocked" | "wrong-account";
+    tool: string; evidence: string; checkedAt: string | null; lastVerifiedAt: string | null;
+    expectedIdentity: string; observedIdentity: string; identityStorageApproved: boolean;
+    lastError: string; nextAction: string;
+  };
+  coverage?: {
+    courseId: string | null; // null only for the course-list scope
+    scope: "course-list" | "assignments" | "grades" | "materials" | "rubrics" | "announcements";
+    status: "checked" | "missing" | "blocked" | "unknown";
+    checkedAt: string | null; evidence: string; itemCount: number | null;
+    pagesChecked: number; paginationComplete: boolean; note: string;
+  }[];
 };
 type Reminder = {
   id: string; title: string; schedule: string; enabled: boolean;
@@ -115,8 +131,20 @@ must be ordinary HTTP(S) links without credentials. An uploaded syllabus is a
 `manual` source; it is not a connected LMS. If no reminders were requested, use
 an empty reminder list.
 
+A manual attachment needs no live connection object. Preserve any connection
+and coverage fields from an existing export. For a newly connected source,
+record only actual tool-observed checks and the approved student identity;
+setting a status does not create a connection. A `verified` connection requires
+its real connector/browser tool, evidence/time, matching expected/observed
+identity, and approval to store that identity. Each course-linked coverage
+record needs an existing course ID. `checked`, `missing`, and `blocked` need
+actual evidence/time; `checked` additionally needs at least one page read and
+complete pagination. Google Drive access establishes materials access only,
+not Classroom enrollment, assignment, grade, or rubric coverage. Keep gaps
+explicit and preserve saved coursework after a source session expires.
+
 The schema for this starter is the beta release's
-[plan model](https://github.com/cdionne7/semester-navigator/blob/v0.2.0-beta.1/lib/plan-model.mjs).
+[plan model](https://github.com/cdionne7/semester-navigator/blob/v0.3.0-beta.1/lib/plan-model.mjs).
 Use that version when creating or importing this beta's artifacts; the default
 repository branch may still contain an older implementation.
 If a student provides a newer dashboard export, preserve its profile ID and
@@ -165,7 +193,7 @@ If the student requests a private website, first check available ChatGPT Work
 and Sites tools. Explain the confirmed access/plan limitation if unavailable and
 keep the tracker usable. If available, use a fresh student-specific hosted
 workspace, private owner-only audience, and durable student-specific storage.
-Use the [matching beta application source](https://github.com/cdionne7/semester-navigator/tree/v0.2.0-beta.1),
+Use the [matching beta application source](https://github.com/cdionne7/semester-navigator/tree/v0.3.0-beta.1),
 or its release bundle, instead of the repository default branch. If that version
 is unavailable, keep the tracker usable and report the missing source.
 Do not require a local computer or reuse the template's hosting ID. Verify the

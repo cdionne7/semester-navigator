@@ -1,6 +1,6 @@
 # Semester Navigator acceptance evidence
 
-Review date: 2026-09-08. This file distinguishes observed results from required
+Review dates: 2026-09-08 and 2026-09-09. The first recorded checks below describe the upload-based beta. Connected desktop setup has separate acceptance cases and evidence in [the connected-source review](https://github.com/cdionne7/semester-navigator/blob/v0.3.0-beta.1/reviews/connected-source-acceptance.md). This file distinguishes observed results from required
 checks. A build passing, an instruction mentioning a safeguard, or a historical
 GPT conversation is not evidence that a student completed installation.
 
@@ -40,7 +40,20 @@ one ambiguous relative deadline, a rubric, no known grades, a browser-only
 student, and a request for a reminder when no scheduling tool is available.
 Inspect the generated tracker/JSON and any calendar export directly.
 
-## Release acceptance cases
+## Connected desktop acceptance cases
+
+| Student situation | Required observable outcome |
+|---|---|
+| Repository link, no materials, no technical setup | Agent reads the maintained entry, checks actual local capabilities, and asks where the student sees schoolwork. No syllabus requirement or student-written code. |
+| School Google account | Agent guides the available school connector or browser setup, verifies the intended identity, and checks Classroom separately from Drive. |
+| Unknown portal, such as “Bright something” | Agent asks for school name, official portal URL or the open tab, identifies from evidence, and uses the available connector or signed-in browser. It never guesses the product from the fragment. |
+| Existing browser sign-in but missing extension | Agent identifies the missing browser connection, guides Settings > Computer Use, then verifies the actual tab. |
+| School restricts an app or hides a grade | Agent records the exact blocked section and next step, preserves a useful partial plan and connection progress, and resumes when access returns. No false complete setup. |
+| Multiple class-list pages or incomplete course inventory | Agent follows pagination and asks the student to confirm the current-term course list before treating coverage as complete. |
+| Wrong account or expired session | Coursework is not read under a mismatched account; reconnection preserves saved completion and notes. |
+| Return next day | Agent verifies source identity again, reads actual updates, previews changes and saves against the latest revision. Dashboard opening alone is not a source refresh. |
+
+## Other release acceptance cases
 
 | Student situation | Required observable outcome |
 |---|---|

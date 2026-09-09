@@ -41,13 +41,26 @@ Never infer a deployment from this template or copy another Site's identifier.
 
 Read `.semester-navigator/intake.json` for the confirmed source materials,
 connection approvals, and preferences. Read the current plan's sources for
-actual connection/check status. An uploaded syllabus is a manual source.
-A portal refresh and a dashboard reload are different actions.
+actual `connection` and per-course `coverage`, check times/evidence, and next
+action. A successful login does not establish assignment, grade, rubric, or
+material coverage. A source's latest attempt can fail while its earlier checked
+coursework remains useful; revalidate access before claiming a fresh check.
+An uploaded syllabus is a manual source. A portal refresh and a dashboard
+reload are different actions.
+
+Desktop setup discovers the student's school and actual learning tools, then
+guides connector/browser access one question or protected sign-in step at a
+time. Do not require parent configuration, a known portal name, or uploads.
+Record the current term's course list and each class's checked/missing/blocked
+assignments, grades, materials, rubrics, and announcements. Keep incomplete
+coverage and its next action visible in this context; the plan is authoritative.
 
 Use only approved source accounts and verify exposed identity before a connected
-read. Store approved email addresses only in the profile/intake. Keep unknown
+read. Store approved email addresses in the profile/intake account map and
+approved source identity fields, not in general notes/evidence. Keep unknown
 accounts and dates unknown; do not treat a missing email as permission to search
-an arbitrary account. The student handles protected sign-in prompts.
+an arbitrary account. Verify the observed account against the intended school
+identity; persist exact identity values only under approved storage scope. The student handles protected sign-in prompts.
 
 ## Working instructions
 
@@ -67,6 +80,8 @@ and the schedule is read back; a calendar export alone is not a notification.
 
 The setup checkpoint is `.semester-navigator/profile.json` under `setup`.
 The current tracker is the saved plan described above. After each completed
-setup stage, persist its verified result and the next action in the checkpoint
-or this context. Resume from that state in a new chat. Do not ask the student to
+setup or source-check stage, persist its verified result and next action in
+the runtime checkpoint or plan's source connection/coverage, as appropriate.
+The runtime `source_ready` state means intake was saved, not that all school
+context was read. Resume from that state in a new chat. Do not ask the student to
 remember commands, recopy a transcript, or recreate an existing workspace.

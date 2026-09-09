@@ -75,7 +75,7 @@ try {
 
   let update;
   try {
-    update = await updateSemesterNavigator({ root, mode });
+    update = await updateSemesterNavigator({ root, mode, rawRoot: args["raw-root"] });
   } catch (error) {
     if (allowOffline && error instanceof UpdateNetworkError) {
       process.stdout.write(`${JSON.stringify({ status: "offline", message: error.message }, null, 2)}\n`);

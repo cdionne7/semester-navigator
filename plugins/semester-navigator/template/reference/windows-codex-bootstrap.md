@@ -15,23 +15,29 @@ Do not ask a web conversation to execute a local Windows command.
 Once the plugin is available, the student sends one prompt:
 
 ```text
-Use Semester Navigator to set up my semester from my syllabus. If I already
-started, find my saved setup and resume it. Show my next confirmed deadline and
-one thing I can do today. Do the technical work for me and keep optional account
-connections, reminders, and hosting for later.
+Use Semester Navigator to set up my semester. Ask which school I attend and
+help me connect the school accounts and class websites I use, one question or
+sign-in step at a time. Check my classes, assignments, grades, and materials.
+Do the technical work and save my progress. If I already started, resume that
+setup. Show my next confirmed deadline and one thing I can do today.
 ```
 
-The assistant checks local tools, reads the syllabus, confirms the minimal
-student/workspace summary, creates or resumes the student root, starts the local
-dashboard, and verifies a saved plan. The generated project contains its own
+The assistant checks local tools, identifies the actual school sources, guides
+connection/sign-in, and verifies the source account and per-class coverage.
+It confirms the minimal student/workspace summary, creates or resumes the
+student root, starts the local dashboard, and verifies a saved plan. No parent
+configuration or uploaded syllabus is required. Blocked source checks retain
+a specific next action; they do not erase the useful plan. The generated project contains its own
 instructions and checkpoint. Use `scripts/run-semester.ps1` to find the portable
 runtime on a fresh process; do not assume an earlier command changed PATH.
 
 A normal browser extension is needed only when using that browser's signed-in
-school portal. It is not required for a syllabus upload or the local dashboard.
-If portal access is requested, verify extension setup in the intended browser
-profile and let the student handle sign-in. The app, built-in browser, and
-regular browser keep separate sessions.
+school portal. Follow the skill's source-connection procedure for the supported
+browser plugin/extension, Manage state, and Work/Codex task browser selection.
+Verify the actual source account and let the student handle protected sign-in.
+A working connection is not proof of complete class coverage. Uploads remain
+an optional fallback, and the local dashboard does not need a school session.
+The app, built-in browser, and regular browser keep separate sessions.
 
 ## Existing source installation
 

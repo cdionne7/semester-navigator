@@ -72,6 +72,7 @@ export function coachingPrompt(plan, mode, taskId, courseId) {
       ", " +
       plan.semester +
       ").",
+    "Student profile: " + plan.profileId + ". Resume my saved workspace and setup checkpoint.",
     course ? "Course: " + course.name + "." : "",
     task
       ? "Assignment: " +
@@ -88,14 +89,18 @@ export function coachingPrompt(plan, mode, taskId, courseId) {
     .join("\n");
   const requests = {
     rubric:
-      "Help me check my work against the actual rubric. Ask me to attach my draft and any missing rubric first. For each criterion show evidence from my draft, what is missing, one concrete revision, and one question for me to think about. Separate required changes from optional improvements. Do not invent rubric criteria, sources, or a predicted instructor grade.",
+      "Help me check my work against the actual rubric. Look for the rubric and my draft in my approved school sources first; ask where my draft is if missing. I can also attach it. For each criterion show evidence from my draft, what is missing, one concrete revision, and one question for me to think about. Separate required changes from optional improvements. Do not invent rubric criteria, sources, or a predicted instructor grade.",
     research:
       "Help me research this class or assignment. Ask what question I am investigating if missing. Use course requirements and reliable primary sources. Give a few relevant resources with verified links, why each helps, what the evidence does not establish, and questions I should consider.",
     study:
-      "Help me understand this material. Ask for class notes or the topic if missing, then ask one diagnostic question. Give a short explanation and practice questions one at a time. Let me try before revealing answers. Finish with one small next step.",
+      "Help me understand this material. Read relevant notes and materials in my approved school sources, or ask for the topic if missing, then ask one diagnostic question. Give a short explanation and practice questions one at a time. Let me try before revealing answers. Finish with one small next step.",
     plan: "Help me plan study blocks. Read my approved calendar or ask for my available times. Protect classes, work, sleep, meals and travel. Show proposals before creating events. Do not claim a time or reminder is confirmed until checked.",
     reminders:
       "Help me enable Semester Navigator reminders. Ask for my preferred time and timezone, then show a schedule for approval. Use the available scheduled-task or calendar tool, verify the saved result, and record its real ID. If unavailable, offer a calendar file. Reminders using local files need my computer on and ChatGPT running.",
+    connect:
+      "Help me connect my school sources in ChatGPT desktop. Ask one focused question at a time, starting with where I see my classes, assignments and grades if that is not saved. If I only know my school name or a partial portal name, help me identify the official portal. Inspect the actual connector and browser tools, guide any required connection or browser permission steps, and let me complete sign-in myself. Verify my school identity before reading coursework. Check the current-term class list and each class's assignments, grades, materials and rubrics, recording coverage and anything unavailable. Google Drive access alone does not establish Google Classroom access. Preview the plan before the initial save, preserve my existing work, and save connection progress so I can resume. Do not require a syllabus upload for this desktop route.",
+    refresh:
+      "Check my approved school sources for changes. Resume the saved source setup; verify the account and read the actual sources with the available tools. Report classes, assignments, grades and materials checked, unavailable sections and the time of each check. If sign-in expired, help me reconnect and keep my saved plan. Show new or changed deadlines, grades and missing coverage. Preserve completion, notes and drafts when saving with the current revision. Opening my dashboard does not perform this check, and a prior successful sign-in does not prove access today.",
     import:
       "Use Semester Navigator to extract my attached syllabus or assignment list. Ask me to attach it if absent. Preserve unknown dates and grades. Show a preview, then after confirmation prepare a profile-bound JSON import for profile " +
       plan.profileId +

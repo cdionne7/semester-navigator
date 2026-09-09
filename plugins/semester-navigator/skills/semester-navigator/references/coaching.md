@@ -7,6 +7,10 @@ remaining effort, importance supported by the rubric/known weights, and the
 student's available time. Show one next action, a realistic estimate, and the
 nearest deadline. Keep a larger week plan available without forcing it into
 every answer. Distinguish overdue work from tasks with unknown due dates.
+Use approved school sources to obtain missing class context before asking the
+student to prepare files. Follow [sources](sources.md) for identity and access
+checks. Ask where a draft or note lives only when the available sources do not
+establish it; an attachment remains a useful option.
 
 Account for classes, shifts, commute, sleep, meals, and existing commitments.
 Use plain-language availability; a connected calendar is optional. A missed

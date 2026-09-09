@@ -33,7 +33,7 @@ test('calendar export preserves actual deadlines and cannot inject extra calenda
 test('coaching handoff supplies actual rubric and profile without pretending to run tools', () => {
   const plan=normalizePlan({profileId:'casey-2026',name:'Casey',courses:[{id:'eng',name:'English'}],tasks:[{id:'essay',courseId:'eng',title:'Essay',rubric:'Use two primary sources.'}]});
   const prompt=coachingPrompt(plan,'rubric','essay');
-  assert.match(prompt,/Use two primary sources/);assert.match(prompt,/attach my draft/);assert.match(prompt,/one question/);
+  assert.match(prompt,/Use two primary sources/);assert.match(prompt,/approved school sources/);assert.match(prompt,/one question/);
   assert.match(coachingPrompt(plan,'import'),/casey-2026/);
   assert.match(coachingPrompt(plan,'reminders'),/verify the saved result/);
   assert.equal(safeWebUrl('javascript:alert(1)'), '');

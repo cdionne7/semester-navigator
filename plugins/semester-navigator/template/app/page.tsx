@@ -16,6 +16,7 @@ import {
   getCourseHealth,
   gradeSummary,
   suggestStudyBlocks,
+  sourceCoverageSummary,
   type Plan,
   type Task,
   type Course,
@@ -36,6 +37,10 @@ const views = {
   week: "This week",
   semester: "All work",
 } as const;
+const sourceScopeLabels = {
+  "course-list": "Class list", assignments: "Assignments", grades: "Grades",
+  materials: "Class materials", rubrics: "Rubrics", announcements: "Announcements",
+};
 type Dialog =
   "task" | "course" | "import" | "settings" | "support" | "blocks" | null;
 function download(name: string, content: string, type = "application/json") {
@@ -92,6 +97,13 @@ function ResourceLink({ url, children }: { url: string; children: ReactNode }) {
   ) : (
     <span>{children}</span>
   );
+}
+function checkedTime(value: string | null, timezone: string) {
+  if (!value) return "Not checked";
+  if (value.length === 10) return value;
+  return new Intl.DateTimeFormat(undefined, {
+    timeZone: timezone, dateStyle: "medium", timeStyle: "short",
+  }).format(new Date(value));
 }
 
 export default function Home({
@@ -156,6 +168,18 @@ export default function Home({
   const attention = health.filter(
     (item) => item.health.status === "Needs attention",
   ).length;
+  const sourceSummaries = plan.sources.map((source) => ({
+    source,
+    summary: sourceCoverageSummary(source, plan.courses.map((course) => course.id)),
+  }));
+  const requiredSchoolChecks = [
+    { courseId: null, scope: "course-list" },
+    ...plan.courses.flatMap((course) =>
+      ["assignments", "grades", "materials", "rubrics", "announcements"].map((scope) => ({ courseId: course.id, scope }))),
+  ];
+  const hasUncheckedSchoolInformation = requiredSchoolChecks.some((required) =>
+    !sourceSummaries.some(({ source, summary }) => summary.connectionVerified &&
+      source.coverage.some((check) => check.courseId === required.courseId && check.scope === required.scope && check.status === "checked")));
   const saveLabels = {
     loading: "Loading saved plan",
     saved: "All changes saved",
@@ -174,7 +198,7 @@ export default function Home({
     try {
       await navigator.clipboard.writeText(prompt);
       setNotice(
-        "Request copied. Paste it into your Semester Navigator chat with the requested class materials.",
+        "Request copied. Paste it into your Semester Navigator chat.",
       );
     } catch {
       setNotice(
@@ -443,19 +467,20 @@ export default function Home({
         )}
         {!plan.courses.length && (
           <section className="welcome card">
-            <p className="eyebrow">START WITH ONE CLASS</p>
+            <p className="eyebrow">CONNECT YOUR SCHOOL</p>
             <h2>Your semester starts here.</h2>
             <p>
-              Your classes and deadlines have not been added yet. Add a class
-              yourself, or ask Semester Navigator to read a syllabus and prepare
-              an import.
+              Ask Semester Navigator to guide you through connecting the school
+              accounts where you check classes, assignments and grades.
             </p>
             <div className="actions">
               <button
                 className="primary"
-                disabled={!canEdit}
-                onClick={addCourse}
+                onClick={() => requestHelp("connect")}
               >
+                Help me connect my school
+              </button>
+              <button disabled={!canEdit} onClick={addCourse}>
                 Add my first class
               </button>
               <button onClick={() => requestHelp("import")}>
@@ -527,14 +552,16 @@ export default function Home({
               {unknown.length
                 ? unknown.length +
                   " unfinished assignments need a confirmed due date."
-                : "Class status uses known deadlines and the grades you provide."}
+                : "Class status uses saved deadlines and reported grades."}
             </p>
             <p className="fine">
-              {plan.sources.some((source) => source.lastChecked)
-                ? "See Sources below for each source's last check."
-                : "No source has been verified yet."}
+              {!sourceSummaries.length
+                ? "Your school sources have not been connected yet."
+                : hasUncheckedSchoolInformation
+                  ? "Some school information still needs checking. See Sources below."
+                  : "Source checks are saved snapshots. Check for changes in ChatGPT."}
             </p>
-            <button onClick={() => requestHelp("import")}>
+            <button onClick={() => requestHelp(plan.sources.length ? "refresh" : "connect")}>
               Review class updates in ChatGPT
             </button>
           </article>
@@ -851,22 +878,39 @@ export default function Home({
         </section>
         <details className="card source-details">
           <summary>Sources and what has been checked</summary>
+          <p className="fine">ChatGPT checks your approved school accounts when you ask. Opening this dashboard does not refresh them.</p>
+          <div className="actions">
+            <button onClick={() => requestHelp("connect")}>Connect or repair school access</button>
+            <button onClick={() => requestHelp("refresh")}>Check school sources in ChatGPT</button>
+          </div>
           {plan.sources.length ? (
-            <ul>
-              {plan.sources.map((source) => (
+            <ul className="source-list">
+              {sourceSummaries.map(({ source, summary }) => (
                 <li key={source.id}>
-                  <ResourceLink url={source.url}>{source.title}</ResourceLink> ·{" "}
-                  {source.status} · {source.lastChecked || "Not checked"}
-                  {source.verificationNote
-                    ? " · " + source.verificationNote
-                    : ""}
+                  <h3><ResourceLink url={source.url}>{source.title}</ResourceLink></h3>
+                  <p>{summary.label}</p>
+                  <p className="fine">Last successful read: {checkedTime(source.lastChecked, plan.timezone)}</p>
+                  {source.connection.expectedIdentity && <p className="fine">School account: {source.connection.expectedIdentity}</p>}
+                  {source.verificationNote && <p className="fine">{source.verificationNote}</p>}
+                  {source.connection.nextAction && <p><strong>Next step:</strong> {source.connection.nextAction}</p>}
+                  {!!source.coverage.length && !summary.connectionVerified && <p className="fine">Saved coverage below is historical. Ask ChatGPT to verify access again.</p>}
+                  {!!source.coverage.length && <ul className="coverage-list" aria-label={source.title + " coverage"}>
+                    {source.coverage.map((check, index) => <li key={index}>
+                      <strong>{check.courseId ? plan.courses.find((course) => course.id === check.courseId)?.name || check.courseId : "Class list"}</strong>
+                      {check.courseId ? " · " + sourceScopeLabels[check.scope] : ""}: {check.status === "unknown" ? "not checked" : check.status}
+                      {check.itemCount !== null ? " (" + check.itemCount + " items)" : ""}
+                      {check.checkedAt ? " · " + checkedTime(check.checkedAt, plan.timezone) : ""}
+                      {check.note ? ". " + check.note : ""}
+                    </li>)}
+                  </ul>}
+                  {!!summary.gaps.length && <details><summary>Not checked by this source ({summary.gaps.length})</summary><ul>{summary.gaps.map((gap) => <li key={gap}>{plan.courses.reduce((label, course) => label.replace(course.id + ":", course.name + ":"), gap)}</li>)}</ul></details>}
                 </li>
               ))}
             </ul>
           ) : (
             <p>
-              No sources recorded. Add assignments manually or import a verified
-              plan from Semester Navigator.
+              No sources recorded. Ask ChatGPT to help connect your school. You
+              can also add work manually or import a prepared plan.
             </p>
           )}
         </details>
@@ -1200,9 +1244,10 @@ export default function Home({
           {dialog === "support" && (
             <section>
               <p>
-                Copy this request into your Semester Navigator chat. Attach your
-                draft, syllabus or notes when requested. This dashboard does not
-                send them automatically.
+                Copy this request into your Semester Navigator chat in ChatGPT
+                desktop. ChatGPT will guide the next step using your approved
+                school connections. This dashboard does not send the request
+                automatically.
               </p>
               <label>
                 Request for Semester Navigator

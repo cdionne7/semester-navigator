@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizePlan,validatePlan,normalizeDueAt,mergeImportedPlan,tasksForView,formatDue,getCourseHealth,gradeSummary,suggestStudyBlocks,createPlanService} from '../lib/plan-model.mjs';
+import {recordSourceCheck,expireSourceAccess,sourceCoverageSummary,SOURCE_SCOPES} from '../lib/plan-model.mjs';
 const fixture=()=>normalizePlan({profileId:'review-student',name:'Review',school:'Example',timezone:'America/New_York',courses:[{id:'math',name:'Math'}],tasks:[{id:'hw',courseId:'math',title:'Homework',dueAt:'2026-09-09',minutes:60}]});
 function memoryStore(){let row=null;return {read:async()=>row?structuredClone(row):null,write:async(next,base,isNew)=>{if(isNew?row!==null:!row||row.revision!==base)return false;row=structuredClone(next);return true;},peek:()=>row};}
 test('legacy labels remain unknown; profile and malformed values fail with useful errors',()=>{
@@ -116,4 +117,81 @@ test('partial nested source records merge by ID without erasing denominators, sc
  const revisedScore=normalizePlan({profileId:current.profileId,courses:[{id:'math',gradingComponents:[{id:'exam',score:19,possible:20}]}]});merged=mergeImportedPlan(current,revisedScore);assert.equal(merged.courses[0].gradingComponents[0].score,19);assert.equal(merged.courses[0].gradingComponents[0].possible,20);assert.equal(merged.courses[0].gradingComponents[0].finalized,true);
  const changedSeed=structuredClone(current);changedSeed.courses[0].grade='';changedSeed.courses[0].resources=[];changedSeed.courses[0].gradingComponents=[];
  merged=mergeImportedPlan(current,changedSeed,current);assert.deepEqual(merged.courses[0].resources,[]);assert.deepEqual(merged.courses[0].gradingComponents,[]);
+});
+
+const sourceTime='2026-09-09T14:00:00.000Z';
+const sourceConnection=(extra={})=>({state:'verified',tool:'synthetic-school-browser',evidence:'Read the exposed school-account identity on the authorized portal.',checkedAt:sourceTime,expectedIdentity:'student@example.invalid',observedIdentity:'STUDENT@example.invalid',identityStorageApproved:true,...extra});
+const sourceScope=(courseId,scope,extra={})=>({courseId,scope,status:'checked',checkedAt:sourceTime,evidence:'Read this scope and its final page in the synthetic portal.',itemCount:2,pagesChecked:2,paginationComplete:true,note:'',...extra});
+const sourcePlan=()=>{const plan=fixture();plan.courses.push({...plan.courses[0],id:'english',name:'English'});plan.tasks[0].state='done';plan.tasks[0].notes='Keep my draft notes';return plan;};
+const connect=(plan,extra={})=>recordSourceCheck(plan,{profileId:plan.profileId,source:{id:'school',title:'School portal',url:'https://school.example.invalid',provider:'brightspace',accessMode:'browser',connection:sourceConnection(),coverage:[sourceScope(null,'course-list'),sourceScope('math','assignments')],...extra}});
+
+test('legacy source flags and a login-only portal cannot imply checked enrollment or course access',()=>{
+ const plan=normalizePlan({...fixture(),sources:[{id:'legacy',status:'connected',verified:true,lastChecked:sourceTime},{id:'upload',status:'manual',verified:true,lastChecked:sourceTime}]});
+ assert.equal(sourceCoverageSummary(plan.sources[0],[]).connectionVerified,false);assert.equal(sourceCoverageSummary(plan.sources[0],[]).checkedCount,0);assert.match(sourceCoverageSummary(plan.sources[0],[]).gaps[0],/course-list unknown/);
+ assert.match(sourceCoverageSummary(plan.sources[1],[]).label,/Manual source/);assert.deepEqual(normalizePlan(plan),plan);
+ const configured=connect({...sourcePlan(),courses:[],tasks:[]},{provider:'unknown',coverage:[]});const summary=sourceCoverageSummary(configured.sources[0],[]);
+ assert.equal(summary.connectionVerified,true);assert.equal(summary.checkedCount,0);assert.equal(summary.gaps.length,1);assert.match(summary.gaps[0],/course-list/);assert.match(summary.label,/service not identified/);assert.equal(configured.sources[0].provider,'unknown');assert.equal(configured.sources[0].lastChecked,null);
+});
+test('Google Drive checks actual materials and rubric documents without claiming Classroom access',()=>{
+ const plan=connect(sourcePlan(),{provider:'google-drive',accessMode:'connector',coverage:[sourceScope('math','materials'),sourceScope('math','rubrics')]});const summary=sourceCoverageSummary(plan.sources[0],['math']);
+ assert.equal(summary.checkedCount,2);assert.match(summary.label,/Classroom access is not established/);assert.ok(summary.gaps.some(gap=>gap.includes('assignments unknown')));assert.ok(summary.gaps.some(gap=>gap.includes('course-list unknown')));
+ for(const scope of ['course-list','assignments','grades','announcements'])assert.throws(()=>connect(sourcePlan(),{provider:'google-drive',accessMode:'connector',coverage:[sourceScope(scope==='course-list'?null:'math',scope)]}),/does not establish Google Classroom/);
+});
+test('partial pagination, hidden grades and an unread roster remain separate explicit gaps',()=>{
+ assert.throws(()=>connect(sourcePlan(),{coverage:[sourceScope('math','assignments',{paginationComplete:false})]}),/every available page/);
+ const plan=connect(sourcePlan(),{coverage:[sourceScope(null,'course-list',{status:'blocked',paginationComplete:false,note:'The next course-list page could not be opened.'}),sourceScope('math','assignments'),sourceScope('math','grades',{status:'blocked',note:'The gradebook is hidden by the instructor.'})]});
+ const summary=sourceCoverageSummary(plan.sources[0],['math','english'],['course-list','assignments','grades']);assert.equal(summary.checkedCount,1);assert.equal(summary.gaps.filter(gap=>gap.includes('course-list')).length,1);assert.ok(summary.gaps.some(gap=>gap.includes('hidden by the instructor')));assert.ok(summary.gaps.some(gap=>gap.includes('english: assignments unknown')));
+ const allKnown=connect(sourcePlan(),{coverage:sourcePlan().courses.flatMap(course=>SOURCE_SCOPES.filter(scope=>scope!=='course-list').map(scope=>sourceScope(course.id,scope)))});assert.deepEqual(sourceCoverageSummary(allKnown.sources[0],['math','english']).gaps,['School: course-list unknown']);
+});
+test('pending source checkpoints retain approved intended identity, while unapproved identity records fail',()=>{
+ const pending=recordSourceCheck(fixture(),{profileId:'review-student',source:{id:'school',provider:'unknown',accessMode:'browser',connection:{state:'unverified',expectedIdentity:'student@example.invalid',identityStorageApproved:true,nextAction:'Choose the school account in the protected sign-in prompt.'}}});
+ assert.equal(pending.sources[0].connection.expectedIdentity,'student@example.invalid');assert.equal(sourceCoverageSummary(pending.sources[0],['math']).canRefresh,false);assert.equal(pending.sources[0].lastChecked,null);
+ assert.throws(()=>connect(sourcePlan(),{connection:sourceConnection({identityStorageApproved:false})}),/unapproved account identifiers/);
+ assert.throws(()=>normalizePlan({...fixture(),sources:[{id:'school',provider:'brightspace',accessMode:'browser',connection:sourceConnection({observedIdentity:'teacher@example.invalid'})}]}),/does not match the intended student/);
+});
+test('wrong account checks cannot replace the intended identity or accept new coursework coverage',()=>{
+ const original=connect(sourcePlan());const before=structuredClone(original);
+ const wrong=recordSourceCheck(original,{profileId:original.profileId,source:{id:'school',connection:sourceConnection({observedIdentity:'teacher@example.invalid',checkedAt:'2026-09-09T15:00:00Z'}),coverage:[sourceScope('english','grades')]}});
+ assert.equal(wrong.sources[0].connection.state,'wrong-account');assert.equal(sourceCoverageSummary(wrong.sources[0],['math']).canRefresh,false);assert.ok(wrong.sources[0].coverage.every(record=>record.status==='unknown'));assert.equal(wrong.sources[0].coverage.length,2);assert.equal(wrong.sources[0].lastChecked,sourceTime);assert.deepEqual(wrong.tasks,original.tasks);assert.deepEqual(original,before);
+ assert.throws(()=>recordSourceCheck(original,{profileId:original.profileId,source:{id:'school',connection:sourceConnection({expectedIdentity:'teacher@example.invalid',observedIdentity:'teacher@example.invalid'})}}),/changes the saved intended account/);
+ assert.throws(()=>mergeImportedPlan(original,{profileId:original.profileId,sources:[{id:'school',connection:sourceConnection({expectedIdentity:'teacher@example.invalid',observedIdentity:'teacher@example.invalid'})}]}),/changes the saved intended account/);
+});
+test('expiry persists source progress and coursework; login-only repair cannot revive old coverage',async()=>{
+ const seed=sourcePlan();const service=createPlanService(seed,memoryStore());const initial=await service.load();let plan=connect(initial.plan);await service.save({plan,baseRevision:0});let saved=await service.load();
+ plan=expireSourceAccess(saved.plan,{profileId:seed.profileId,sourceId:'school',checkedAt:'2026-09-09T15:00:00Z',reason:'School session expired.'});await service.save({plan,baseRevision:saved.revision});saved=await service.load();
+ const expired=saved.plan.sources[0];assert.equal(expired.connection.state,'needs-sign-in');assert.equal(expired.lastChecked,sourceTime);assert.equal(expired.connection.lastVerifiedAt,sourceTime);assert.equal(expired.coverage[0].checkedAt,sourceTime);assert.equal(expired.coverage[0].pagesChecked,2);assert.equal(expired.coverage[0].status,'unknown');assert.deepEqual(saved.plan.tasks,seed.tasks);
+ plan=recordSourceCheck(saved.plan,{profileId:seed.profileId,source:{id:'school',connection:sourceConnection({checkedAt:'2026-09-09T16:00:00Z'}),coverage:[]}});assert.equal(sourceCoverageSummary(plan.sources[0],['math']).checkedCount,0);assert.equal(plan.sources[0].lastChecked,sourceTime);assert.equal(plan.sources[0].connection.lastError,'');
+ plan=recordSourceCheck(plan,{profileId:seed.profileId,source:{id:'school',coverage:[sourceScope('math','assignments',{checkedAt:'2026-09-09T16:10:00Z'})]}});assert.equal(sourceCoverageSummary(plan.sources[0],['math']).checkedCount,1);assert.equal(plan.sources[0].lastChecked,'2026-09-09T16:10:00.000Z');assert.equal(plan.sources[0].coverage.find(record=>record.scope==='course-list').status,'unknown');
+});
+test('legacy metadata and disjoint source imports preserve connection progress and other course checks',()=>{
+ const original=connect(sourcePlan());const legacy=normalizePlan({profileId:original.profileId,sources:[{id:'school',title:'Updated portal title'}]});let merged=mergeImportedPlan(original,legacy);
+ assert.deepEqual(merged.sources[0].connection,original.sources[0].connection);assert.deepEqual(merged.sources[0].coverage,original.sources[0].coverage);assert.equal(merged.sources[0].provider,'brightspace');
+ merged=mergeImportedPlan(merged,{profileId:original.profileId,sources:[{id:'school',connection:{nextAction:'Review the remaining class.'},coverage:[sourceScope('english','materials')]}]});
+ assert.equal(merged.sources[0].connection.state,'verified');assert.equal(merged.sources[0].connection.tool,'synthetic-school-browser');assert.equal(merged.sources[0].connection.nextAction,'Review the remaining class.');assert.equal(merged.sources[0].coverage.length,3);assert.ok(merged.sources[0].coverage.some(record=>record.courseId==='math'&&record.scope==='assignments'));
+ const expired=mergeImportedPlan(merged,{profileId:merged.profileId,sources:[{id:'school',connection:{state:'needs-sign-in',checkedAt:'2026-09-09T17:00:00Z',lastError:'Expired'}}]});assert.ok(expired.sources[0].coverage.every(record=>record.status==='unknown'));assert.equal(expired.sources[0].lastChecked,sourceTime);
+});
+test('serialized normalized partial source imports preserve established connection facts',()=>{
+ const original=connect(sourcePlan(),{type:'school-portal'});
+ const incoming=JSON.parse(JSON.stringify(normalizePlan({profileId:original.profileId,sources:[{id:'school',title:'Renamed school portal'}]})));
+ const merged=mergeImportedPlan(original,incoming);
+ assert.deepEqual(merged.sources[0],{...original.sources[0],title:'Renamed school portal'});
+ assert.deepEqual(merged.tasks,original.tasks);
+ const direct=structuredClone(original);direct.sources[0].connection.identityStorageApproved=false;
+ assert.throws(()=>normalizePlan(direct),/unapproved account identifiers/);
+});
+test('older source exports cannot undo expiry, login-only recovery, or newer scope checks',()=>{
+ const original=connect(sourcePlan());const oldExport=JSON.parse(JSON.stringify(original));oldExport.tasks[0].title='Imported assignment correction';
+ const expired=expireSourceAccess(original,{profileId:original.profileId,sourceId:'school',checkedAt:'2026-09-09T15:00:00Z',reason:'Session expired'});
+ let merged=mergeImportedPlan(expired,oldExport);
+ assert.deepEqual(merged.sources,expired.sources);assert.equal(merged.tasks[0].title,'Imported assignment correction');assert.equal(sourceCoverageSummary(merged.sources[0],['math']).canRefresh,false);
+ const reconnected=recordSourceCheck(expired,{profileId:original.profileId,source:{id:'school',connection:sourceConnection({checkedAt:'2026-09-09T16:00:00Z'})}});
+ merged=mergeImportedPlan(reconnected,oldExport);assert.deepEqual(merged.sources,reconnected.sources);assert.equal(sourceCoverageSummary(merged.sources[0],['math']).checkedCount,0);
+ const reread=recordSourceCheck(reconnected,{profileId:original.profileId,source:{id:'school',coverage:[sourceScope('math','assignments',{checkedAt:'2026-09-09T17:00:00Z',itemCount:4})]}});
+ merged=mergeImportedPlan(reread,oldExport);assert.deepEqual(merged.sources,reread.sources);assert.equal(merged.sources[0].coverage.find(record=>record.scope==='assignments').itemCount,4);
+});
+test('source check and expiry operations remain bound to independent student plans',()=>{
+ const first=connect(sourcePlan());const second=connect({...sourcePlan(),profileId:'another-student'},{connection:sourceConnection({expectedIdentity:'other@example.invalid',observedIdentity:'other@example.invalid'})});const secondBefore=structuredClone(second);
+ assert.throws(()=>recordSourceCheck(second,{profileId:first.profileId,source:{id:'school'}}),/different student profile/);
+ assert.throws(()=>expireSourceAccess(second,{profileId:first.profileId,sourceId:'school',checkedAt:sourceTime}),/different student profile/);
+ expireSourceAccess(first,{profileId:first.profileId,sourceId:'school',checkedAt:'2026-09-09T18:00:00Z'});assert.deepEqual(second,secondBefore);assert.equal(second.sources[0].connection.expectedIdentity,'other@example.invalid');
 });

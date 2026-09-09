@@ -1,8 +1,9 @@
 # Semester Navigator
 
-Turn a syllabus or assignment prompt into a private semester plan, a clear next
-step, and practical study or writing help. Start with one course. Add calendars,
-portal connections, verified reminders, and a private hosted dashboard later.
+Connect your school learning tools in ChatGPT desktop, collect your current
+classes and coursework, and build a private semester plan with practical study
+and writing help. ChatGPT guides the connection and setup conversation. You
+handle your own sign-in and protected permission prompts.
 
 This public repository contains the application and plugin. Student work belongs
 in a separate private workspace. The canonical template must never be deployed
@@ -10,46 +11,66 @@ as a student's Site.
 
 ## Start here
 
-Forward this one link: [Semester Navigator beta setup](https://github.com/cdionne7/semester-navigator/releases/tag/v0.2.0-beta.1).
+Forward this one link: [Semester Navigator beta setup](https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.0-beta.1).
 It provides the desktop bundle, its checksum, and the standalone web starter.
-Use the matching prompt below and attach one syllabus or assignment.
+On desktop, use the school-connection prompt below. No parent configuration,
+prepared course list, known portal name, or uploaded syllabus is required.
+The separate web starter can begin from an uploaded syllabus or assignment.
 
-This entry targets **v0.2.0-beta.1**. If its page or downloads are unavailable,
+This entry targets **v0.3.0-beta.1**. If its page or downloads are unavailable,
 do not substitute the repository's `main` branch, the old Windows installer,
 or an unpublished draft release. The beta source and instructions must travel
 together.
 
 ## Start on your computer
 
-Open a local Codex task in the
-[ChatGPT desktop app](https://learn.chatgpt.com/docs/windows/windows-app),
-attach your syllabus, and paste:
+Open a local Work or Codex task in the
+[ChatGPT desktop app](https://learn.chatgpt.com/docs/windows/windows-app)
+and paste:
 
 ```text
-Set up Semester Navigator beta v0.2.0-beta.1 from:
-https://github.com/cdionne7/semester-navigator/releases/tag/v0.2.0-beta.1
+Set up Semester Navigator for me from:
+https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.0-beta.1
 
-First read my syllabus, show my next confirmed deadline and one thing I can do
-today. Inspect that exact published release. Download its
-semester-navigator-plugin-v0.2.0.zip and matching .zip.sha256, verify the
-checksum, and extract the bundle. Use available local tools to register its
-marketplace and add the plugin. Do not require Git, GitHub CLI, GitHub sign-in,
-administrator access, or system-wide software.
-
-Use the installed skill, or read the extracted plugin's SKILL.md if the new
-skill is not loaded in this task. Complete the approved student setup and
-verify my saved dashboard. Resume an existing setup if present. If the app
-requires a new task or folder selection, give me the exact folder and one
-ready-to-copy resume prompt. Keep optional connections, reminders, and hosting
-for later. If local tools are unavailable, use the release's web-starter.md.
+Ask me which school I attend, then help me connect the school accounts and
+websites I actually use, one question or sign-in step at a time. Find my current
+classes and check assignments, deadlines, grades, and course materials. Do the
+technical setup for me. Tell me when I need to sign in or approve a protected
+prompt. Save my progress so we can resume if something stops working. Show my
+next confirmed deadline and one thing I can do today. I should not need to
+prepare files or have a parent configure my school connections first.
 ```
 
-The assistant handles the technical steps. The bundle contains the skill,
-setup scripts, application template, and prebuilt dashboard. It asks only for
-missing facts and confirms the student, folder, and plan before saving.
-Windows can use a verified portable runtime inside the project; this route
-does not require installing application dependencies or building the app on
-the student's machine.
+ChatGPT identifies the school's actual tools from the student's answers,
+official school pages, and the visible portal. “Google for school” does not
+prove Google Classroom, and “Bright...” does not prove Brightspace. It checks
+available connectors and browser tools, guides the student's own sign-in, and
+verifies the account before reading coursework. It then checks the current
+course list and each class's assignments, grades, and materials. A connection
+can work while some pages or grades remain unavailable; the saved plan states
+exactly what was checked and what still needs attention.
+
+The assistant handles installation from the verified release ZIP, including
+its checksum and prebuilt dashboard. Giving ChatGPT a repository URL does not
+automatically install the plugin, load its instructions, or grant local or
+school-account access. It must inspect the task's actual tools, retrieve the
+matching bundle, and use the installed skill or read the extracted `SKILL.md`.
+If the app requires a new task or folder selection, it gives the exact folder
+and one resume prompt; the student does not copy a transcript or start over.
+
+Before the first save, ChatGPT confirms the student, private folder, and what
+will be saved. It can save partial connection progress and continue with the
+remaining classes. Windows can use a verified portable runtime inside the
+project, without Git, GitHub CLI, GitHub sign-in, administrator access,
+system-wide software, or an application build. The parent supplies only the
+entry link; the student supplies their own school/account choices.
+
+If a browser connection is needed, ChatGPT guides the supported
+[extension setup](https://learn.chatgpt.com/docs/chrome-extension) and checks
+it in the actual task. Uploads are an optional fallback if the student chooses
+them or school access is blocked. ChatGPT names a missing capability instead
+of pretending it connected. Calendar writes, recurring reminders, and a
+hosted Site remain optional.
 
 The local dashboard works on that computer while its server is running. A later
 chat can reopen the student project and restart it using the saved instructions.
@@ -64,7 +85,7 @@ Open ChatGPT, preferably Work when available, attach one syllabus, and paste:
 
 ```text
 Use this Semester Navigator web starter with my attached syllabus:
-https://raw.githubusercontent.com/cdionne7/semester-navigator/v0.2.0-beta.1/reference/web-starter.md
+https://raw.githubusercontent.com/cdionne7/semester-navigator/v0.3.0-beta.1/reference/web-starter.md
 
 First show my nearest confirmed deadline and one useful thing I can do today.
 Ask only for missing information. Keep unknown dates and grades unknown. Save
@@ -75,7 +96,7 @@ reminders, and a private Site optional. If you cannot read the starter link,
 begin from the syllabus and tell me to attach the downloaded web-starter.md.
 ```
 
-If needed, download [web-starter.md](https://github.com/cdionne7/semester-navigator/releases/download/v0.2.0-beta.1/web-starter.md)
+If needed, download [web-starter.md](https://github.com/cdionne7/semester-navigator/releases/download/v0.3.0-beta.1/web-starter.md)
 from the same beta page and attach it to ChatGPT. It needs no custom GPT or
 plugin installation. The [repository copy](reference/web-starter.md) documents
 the complete portable tracker/import format. ChatGPT must state where the
@@ -100,8 +121,9 @@ Planning with supplied material should remain useful if hosting is unavailable.
 - **Saved planning:** Courses, dated tasks, completion, notes, rubrics, resources,
   grade scenarios, and manual imports are stored in the student workspace or
   that student's private Site. Unknown deadlines remain unknown.
-- **Source refresh:** The assistant reads an approved file, connector, or browser
-  source and previews the changes. Opening the dashboard does not read an LMS.
+- **Source refresh:** The assistant reads the student-approved school connector
+  or browser source and previews the changes. Uploads also work. It records
+  which classes, assignments, grades, and materials were actually checked. Opening the dashboard does not read an LMS.
   Browser access requires the appropriate connected browser/extension and the
   student's protected sign-in when needed.
 - **Reminders:** A reminder is scheduled only after a real tool confirms it and
@@ -115,9 +137,11 @@ Planning with supplied material should remain useful if hosting is unavailable.
 ## Resume or report a problem
 
 Open the existing student project and say “Resume Semester Navigator.” The
-profile keeps the completed setup stage, failure information, approved sources,
-and student identity. Do not delete the folder, reinstall blindly, or create a
-second Site to recover a partial setup.
+profile keeps the completed setup stage and student identity; the current
+plan keeps verified source connections, per-class coverage, and the next
+connection step. ChatGPT resumes an interrupted source check instead of asking
+for every school detail again. Do not delete the folder, reinstall blindly, or
+create a second Site to recover a partial setup.
 
 Share the failing stage and redacted error with the assistant. The
 [setup issue form](https://github.com/cdionne7/semester-navigator/issues/new?template=setup-problem.yml)
@@ -138,7 +162,7 @@ npm run plugin:build
 ```
 
 `plugin:build` refreshes `plugins/semester-navigator/template/` and writes
-`artifacts/semester-navigator-plugin-v0.2.0.zip`. The archive has one
+`artifacts/semester-navigator-plugin-v0.3.0.zip`. The archive has one
 `semester-navigator/` root containing `.agents/plugins/marketplace.json` and the
 complete `plugins/semester-navigator/` directory. Do not distribute a plugin
 folder that lacks its template or prebuilt dashboard.

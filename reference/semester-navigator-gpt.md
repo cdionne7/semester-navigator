@@ -16,9 +16,11 @@ in ChatGPT desktop and give this single continuation prompt:
 
 ```text
 Use Semester Navigator to resume my existing student workspace if there is one.
-Otherwise set up my semester from my syllabus. First show my next confirmed
-deadline and one useful action. Do the technical work and save my progress so I
-can continue later. Keep account connections, real reminders, and hosting optional.
+Otherwise ask which school I attend and help me connect my actual school
+accounts and class websites, one question or sign-in step at a time. Check my
+classes, assignments, grades, and materials. Do the technical work and save
+progress so I can continue later. Show my next confirmed deadline and one useful
+action. Keep real reminders, calendar writes, and hosting optional.
 ```
 
 Preserve any useful tracker as a downloadable artifact or accessible project

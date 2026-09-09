@@ -4,19 +4,30 @@
 
 Inspect the current task's actual filesystem, command, and browser tools.
 Do not assume that a custom GPT, GitHub connection, or uploaded ZIP grants local
-execution. If local tools are unavailable, use [web](web.md) immediately.
+execution. For a desktop request, establish whether this is a local Work/Codex
+task before redirecting the student. If the current task has no local tools,
+give the one relevant desktop task-selection step and preserve the handoff.
+Use [web](web.md) when the student wants web-only work or local execution
+remains unavailable; do not present uploads as a completed school connection.
 
 If the current root already contains the matching student profile, use its own
 scripts and saved plan to resume or restart the dashboard. Skip template
-discovery and initial intake. The bundled playbook works without the original
+discovery and initial intake. Continue any incomplete school connection or
+coverage check from the saved plan using [sources](sources.md). The bundled
+playbook works without the original
 plugin or canonical repository; see “Resume a partial setup” below.
 For an older `schema_version: 1` profile, or a root missing its launcher/playbook,
 follow “Upgrade the verified legacy student folder” below before attempting to
 run missing scripts. A bootstrap resume does not upgrade old source files.
+For a schema-version-2 workspace, check whether its own `lib/plan-model.mjs`
+exports `recordSourceCheck`, `expireSourceAccess`, and `sourceCoverageSummary`
+and supports the connection/coverage shape. If any is absent, use “Update an
+existing 0.2 student workspace for school connections” below. Do not wait for
+the optional after-planning update when the requested feature needs new code.
 
 The normal desktop route uses a prebuilt dashboard bundled with the
-[v0.2.0-beta.1 release](https://github.com/cdionne7/semester-navigator/releases/tag/v0.2.0-beta.1).
-For an initial download, use its `semester-navigator-plugin-v0.2.0.zip` and verify
+[v0.3.0-beta.1 release](https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.0-beta.1).
+For an initial download, use its `semester-navigator-plugin-v0.3.0.zip` and verify
 the accompanying `.zip.sha256` before extraction. Do not substitute the older default-branch
 installer or a GitHub source archive for this prebuilt plugin bundle.
 It does not require Git, GitHub CLI, GitHub sign-in, a system Node installation,
@@ -39,28 +50,49 @@ the package. Do not turn a student setup into a source-build troubleshooting
 exercise. A repository marketplace is a desktop/CLI distribution route; do not
 claim this plugin is listed or installed in ChatGPT on the web.
 
-## Get to a useful plan
+## Connect the student's school and build the plan
 
-1. Read an existing student profile and setup checkpoint first. If none exists,
-   ask how to address the student. Determine school, term, education level, and
-   time zone from supplied materials and tools; ask only for the missing facts.
-   Use the student's own eligible account. If eligibility for a requested
-   product is uncertain, check current official requirements and ask a clear
-   question stating the actual requirement, without collecting a birth date.
-2. Ask for one available syllabus, assignment prompt, course export, or portal
-   link. A student with no material can still create a small plan with an
-   explicit “find the syllabus” next action. Do not require account connections.
-3. Follow [sources](sources.md) to extract a compact preview. Show the next
-   confirmed deadline and one action the student can do today. Keep missing
-   dates unknown; a full course inventory is not a prerequisite.
-4. Recommend a new private student folder using a readable student and term
-   name. Show the student, school/term/time zone, source preview, folder, and
-   what will be saved. Ask for one confirmation. This approves the local
-   workspace and local dashboard, not calendar writes or hosted deployment.
+1. Resume a matching profile and source checkpoint before asking new questions.
+   For a fresh student with no school identified, start with “Which school do
+   you attend?” Ask one focused question at a time. Discover the school's
+   actual learning tools from official pages and the student's normal class
+   page. Ask where they see assignments only if that remains unclear. Do not
+   require the student or parent to know a portal/product name or prepare files.
+2. Follow [sources](sources.md) to discover actual connector/browser tools and
+   guide the supported connection. “Google for school” may mean school sign-in,
+   Classroom, Drive, or another portal. “Bright...” remains unknown until the
+   official school link or visible product establishes it. Use existing
+   authorization to connect the student's school sources; ask a short scope
+   question only when the requested source/account is unclear. The student
+   handles their own sign-in and protected prompts. Verify exposed identity
+   before reading private course data.
+3. Inspect the current course list and ask the student to confirm the term/list
+   where the source leaves ambiguity. Check assignments and dates, grades,
+   grading rules, materials/rubrics, and relevant announcements for each class.
+   Record coverage independently from authentication. Missing grades, unopened
+   documents, hidden courses, or blocked pages are not “everything connected.”
+   Show the nearest confirmed deadline and one useful action as soon as it is
+   available, then continue the rest of the requested term setup.
+4. Ask for remaining identity/term/education-level/time-zone facts only when
+   tools and visible material cannot establish them. Use the student's own
+   eligible account. If eligibility for a requested product is uncertain,
+   check its actual requirements and ask without collecting a birth date.
+   Recommend a private student/term folder and show one compact summary of
+   identity, source access, checked/missing coverage, and what will be saved.
+   Confirm that initial save once, unless it is already explicitly approved.
 
-Keep themes, school logos, email, cloud folders, calendar integration, passkeys,
-and recurring reminders optional after the first useful plan. Upload-based
-setup does not require choosing or restarting a browser profile.
+Save an approved partial workspace if an interruption, protected sign-in, or
+new task is needed before all course checks finish. Its plan can have an empty
+course/task list and a pending source when nothing has been read yet; label
+that state accurately. Gather only the identity fields needed by bootstrap,
+then persist the connection's actual last result and next action. Do not wait
+for every portal to work before preserving useful progress, and do not call
+runtime `source_ready` proof that the school scan is complete.
+
+Keep themes, school logos, cloud folders, calendar writes, passkeys, recurring
+reminders, and hosted Sites optional. Uploads are a student-chosen fallback,
+not the default first question for desktop setup. If access is blocked, state
+the exact limitation and next supported step without requiring parent setup.
 
 ## Save and open the workspace
 
@@ -73,7 +105,9 @@ do not collect a birth date. Include the confirmed `educationLevel` in the
 intake's plan (`high-school`, `college`, or `other`).
 Use `--intake-file` for the approved structured intake and initial plan, and
 `--prepare no` for the normal prebuilt-dashboard path. Do not invent verified
-browser states: pending/unavailable browser details are valid for uploads.
+browser states: pending/unavailable details are valid for a saved connection
+checkpoint or uploads. A school browser login does not verify ChatGPT Site
+access; leave unrelated Site-session fields pending.
 
 The intake JSON contract is `schema_version: 1`, `verified: true`, `plan`,
 `expected_accounts`, `approved_cloud_root`, `connected_sources`, and
@@ -117,12 +151,60 @@ If the port is occupied, identify whether the existing server belongs to this
 root; reuse only a verified match, otherwise choose another available port.
 On later chats, restart the saved root's server when necessary and reopen it.
 
+## Update an existing 0.2 student workspace for school connections
+
+A 0.2 student root already uses `schema_version: 2` but cannot preserve the new
+source contract. Keep its identity, plan, source approvals, and Site binding.
+Use the verified 0.3 release's updater against that same student root; the
+request to set up/fix these connections authorizes the necessary supported
+update. Do not repeat approval already supplied for that work.
+
+Read the current saved plan and ensure any pending dashboard edit is saved or
+kept in its recoverable copy. Identify and stop only this root's local server
+before updating. Invoke **the new verified template's script**, using its
+compatible runtime or the student's existing compatible portable runtime:
+
+```text
+node <verified-0.3-template>/scripts/update-semester-navigator.mjs
+  --root <existing-student-root> --mode student
+  --raw-root https://raw.githubusercontent.com/cdionne7/semester-navigator/v0.3.0-beta.1
+  --allow-offline no
+```
+
+These are assistant-executed arguments, not a student command checklist. On
+Windows, the verified template's `run-semester.ps1 -Command node` can invoke
+that absolute script path with `-CommandArguments` as a native PowerShell
+array. Do not pass `--raw-root` to the old 0.2 script; that script does not
+implement release selection. Keep the new updater's default verification and
+rollback enabled. The student mode checks the prebuilt runtime and relevant
+tests; it does not install application dependencies or run a development build.
+
+Do not initialize a new update baseline, run canonical recovery, use the
+schema-version-1 migration, or copy individual files over this workspace.
+The updater must validate its existing tracked files and preserve private
+records. On a network failure or managed-file conflict, report the specific
+blocker, keep the saved plan, and retain a source-setup next action; do not
+claim that the unsupported source metadata was saved.
+
+After a successful update, recheck the helpers in this student root and restart
+its server so the API loads the new modules. Verify the same profile and saved
+coursework, then use an actual pending or observed source record for an API
+save/readback and confirm its connection/coverage fields survive. Do not invent
+a verified connection for this check. Resume the actual school-connection step
+only with the supported runtime; keep the existing student project and URL.
+This local update does not redeploy an existing private Site. Use the verified
+local dashboard until a separately approved Site update and hosted API
+readback establish support there too.
+
 ## Resume a partial setup
 
 Read `profile.json.setup`, including `status`, `last_completed_stage`,
 `failed_stage`, and `last_error`. A same-profile existing root is a resume,
 not a reason to delete it or create another student Site. Preserve its plan,
-source approvals, and completed intake. Retry the failed stage only after
+source approvals, completed intake, and each plan source's connection/coverage.
+A source with partial or blocked coverage resumes from its recorded next action
+after identity/session revalidation; do not repeat already checked classes
+without a refresh reason. Retry the failed stage only after
 diagnosing its concrete cause; report any remaining blocker with one next step.
 
 The normal `--prepare no` path does not require an optional development

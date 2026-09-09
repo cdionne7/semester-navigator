@@ -18,13 +18,28 @@ Windows, local folders, or a repository marketplace installation.
 Read an existing student profile and checkpoint before repeating intake. Use
 one private student root and a stable student profile ID. Do not require the
 roles son/daughter, separate custom GPTs, shared logins, browser-profile creation,
-or account connections for an uploaded syllabus.
+parent configuration, a known LMS name, or uploads for desktop setup.
 
-Extract a useful first plan from the available course material. Ask only for
-missing facts, one focused question at a time. Confirm the student, school,
+For desktop setup, ask the school first when unknown, discover its actual
+learning tools, and guide the student through supported connectors or browser
+extension/sign-in steps. A repository connection alone grants neither local
+execution nor school access. A school Google account is not proof of Classroom
+coverage; an incomplete product name is not evidence of Brightspace. Verify the
+exposed school account before reading private coursework. Use existing scoped
+authorization to connect school sources without asking it again.
+
+Check the current course list and each class's assignments, grades, materials,
+rubrics, and announcements. Show a first verified deadline/action promptly,
+then continue the remaining requested course checks. Persist actual source
+connection and coverage states, including blocked/unknown scopes and a next
+action. Do not say all school context is loaded from a successful login.
+
+Ask only for missing facts, one focused question at a time. Confirm the student,
 term/level/time zone, proposed private root, source preview, and initial save
-before creating the workspace. Do not connect sources or deploy a Site merely
-because local setup was approved.
+before creating the workspace, unless that save is already authorized. Save
+partial source progress before a required new-task handoff when possible.
+The runtime setup checkpoint does not establish complete school coverage.
+Keep uploads as a student-chosen fallback and the separate web starter route.
 
 After confirmation, use the deterministic bootstrap with verified intake JSON
 and `--prepare no` for the prebuilt dashboard. Create a new root outside this
@@ -39,8 +54,9 @@ prebuilt student route does not run npm ci or a full development build. Do not
 install system software, require Git/GitHub CLI/authentication, or change the
 machine-wide execution policy. The assistant executes available technical work.
 
-Account connections, actual reminders, and hosted Sites are optional and require
-the student's applicable authorization. Use their own eligible account, verify
+School connections are the normal desktop setup path; real reminders, calendar
+writes, and hosted Sites are optional. Each uses the student's applicable
+authorization. Use their own eligible account, verify
 exposed source identity before a connected read, and let them handle protected
 sign-in/MFA/CAPTCHA/account prompts. Never request or store credentials.
 
