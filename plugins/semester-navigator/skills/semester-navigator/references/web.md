@@ -35,7 +35,7 @@ will preserve the tracker, account boundaries, or completion history.
 If the student wants a private dashboard and ChatGPT Work plus Sites tools are
 available, use that hosted environment and the available Sites instructions.
 Do not require a Windows install, local root, browser extension, or Ctrl+O.
-Read the [matching v0.3.0-beta.1 application source](https://github.com/cdionne7/semester-navigator/tree/v0.3.0-beta.1)
+Read the [matching v0.3.1-beta.1 application source](https://github.com/cdionne7/semester-navigator/tree/v0.3.1-beta.1)
 or that release bundle as source only; the default branch may still contain
 the older implementation. Create fresh student-specific source and storage in
 the hosted workspace, with no canonical hosting project ID or prototype

@@ -425,6 +425,9 @@ export function mergeImportedPlan(currentRaw, incomingRaw, baselineRaw) {
   const baseline = baselineRaw
     ? normalizePlan(baselineRaw, current.profileId)
     : null;
+  const sameTerm=(first,second)=>first.trim().replace(/\s+/g,' ').toLowerCase()===second.trim().replace(/\s+/g,' ').toLowerCase();
+  if(current.semester.trim()&&incoming.semester.trim()&&!sameTerm(current.semester,incoming.semester)&&(!baseline||!sameTerm(baseline.semester,incoming.semester)))
+    fail(`This import is for ${incoming.semester}, but this workspace is for ${current.semester}. Keep a new term in its own student workspace, or review a term-label correction before importing coursework.`);
   const mergeObject = (local, remote, base, kind) => {
     const result = { ...local };
     for (const [key, value] of Object.entries(remote)) {
@@ -585,7 +588,17 @@ export function recordSourceCheck(planRaw,inputRaw) {
   const incoming=object(input.source,'Source check record');const sourceId=id(incoming.id,'Source ID');const previous=plan.sources.find(source=>source.id===sourceId);
   if(previous?.connection.expectedIdentity&&incoming.connection?.expectedIdentity&&!sameIdentity(previous.connection.expectedIdentity,incoming.connection.expectedIdentity))fail('This check changes the saved intended account. Review that account change directly before checking the source.');
   const connection={...(previous?.connection??{}),...(incoming.connection??{})};
+  const incomingConnectionTime=timestamp(incoming.connection?.checkedAt,'Source connection check time');
+  const needsCheckTimestamp=['wrong-account','needs-sign-in','blocked'].includes(incoming.connection?.state)||
+    (previous?.connection.checkedAt&&incoming.connection?.state&&incoming.connection.state!==previous.connection.state)||
+    (incoming.connection?.observedIdentity&&connection.expectedIdentity&&!sameIdentity(connection.expectedIdentity,incoming.connection.observedIdentity));
+  if(needsCheckTimestamp&&!incomingConnectionTime)
+    fail('A source access change needs its actual check timestamp. Do not replace newer saved access with an undated result.');
+  if(incomingConnectionTime&&previous?.connection.checkedAt&&incomingConnectionTime<previous.connection.checkedAt)
+    fail('This source result is older than the latest saved connection check. Keep the current source state and retry the unfinished check.');
   const mismatch=connection.expectedIdentity&&connection.observedIdentity&&!sameIdentity(connection.expectedIdentity,connection.observedIdentity);
+  if(incomingConnectionTime&&previous?.lastChecked&&incomingConnectionTime<previous.lastChecked&&(mismatch||connection.state!=='verified'))
+    fail('This source failure predates a successful saved read. Keep the newer source state and check access again if needed.');
   const denied=mismatch||['wrong-account','needs-sign-in','blocked'].includes(connection.state);
   if(mismatch){connection.state='wrong-account';connection.lastError='The exposed account does not match the intended student account.';connection.nextAction='Select the intended school account, then verify this source again.';}
   else if(incoming.connection?.state==='verified'){
@@ -593,9 +606,17 @@ export function recordSourceCheck(planRaw,inputRaw) {
     connection.lastError=incoming.connection.lastError??'';connection.nextAction=incoming.connection.nextAction??'';
   }
   const coverage=new Map((previous?.coverage??[]).map(record=>[coverageKey(record),denied&&record.status==='checked'?{...record,status:'unknown',note:record.note?'Previous check retained; recheck after the access interruption. '+record.note:'Previous check retained; recheck after the access interruption.'}:record]));
-  if(!denied)for(const record of incoming.coverage??[]){if(record.courseId&&!plan.courses.some(course=>course.id===record.courseId))fail(`Add or confirm course ${record.courseId} in this student plan before recording its source coverage.`);coverage.set(coverageKey(record),record);}
+  if(!denied)for(const record of incoming.coverage??[]){
+    if(record.courseId&&!plan.courses.some(course=>course.id===record.courseId))fail(`Add or confirm course ${record.courseId} in this student plan before recording its source coverage.`);
+    const checkTime=timestamp(record.checkedAt,'Coverage check time'),prior=coverage.get(coverageKey(record)),accessTime=timestamp(connection.checkedAt,'Source connection check time');
+    if(prior?.checkedAt&&!checkTime)
+      fail('Changing a previously checked source scope needs the actual check timestamp. Keep its saved coverage until a new observation is available.');
+    if(checkTime&&((prior?.checkedAt&&checkTime<prior.checkedAt)||(accessTime&&checkTime<accessTime)))
+      fail('This coursework check is older than a saved scope or connection check. Keep the newer coverage and reread that scope.');
+    coverage.set(coverageKey(record),record);
+  }
   const source=normalizeSource({...previous,...incoming,connection,coverage:[...coverage.values()],...(denied?{verified:false,lastChecked:previous?.lastChecked??null}:{})});
-  if(connection.state==='verified')source.lastChecked=(incoming.coverage??[]).filter(record=>record.status==='checked').map(record=>timestamp(record.checkedAt,'Coverage check time')).filter(Boolean).sort().at(-1)??previous?.lastChecked??null;
+  if(connection.state==='verified')source.lastChecked=[previous?.lastChecked,...(incoming.coverage??[]).filter(record=>record.status==='checked').map(record=>timestamp(record.checkedAt,'Coverage check time'))].filter(Boolean).sort().at(-1)??null;
   return normalizePlan({...plan,sources:previous?plan.sources.map(item=>item.id===sourceId?source:item):[...plan.sources,source]},profileId);
 }
 export function expireSourceAccess(planRaw,inputRaw) {
@@ -614,7 +635,7 @@ export function sourceCoverageSummary(sourceRaw,courseIds,scopes=SOURCE_SCOPES) 
   for(const {courseId,scope}of targets){const record=coverage.get(`${courseId??''}:${scope}`);if(!record||record.status!=='checked'||!current)gaps.push(`${courseId??'School'}: ${scope} ${record?.status==='checked'?'needs rechecking':record?.status??'unknown'}${record?.note?' ('+record.note+')':''}`);}
   const checkedCount=current?source.coverage.filter(record=>record.status==='checked').length:0;
   const labels={'unverified':'Connection not verified. Course access is unknown.','needs-sign-in':'Sign-in is needed again. Saved coursework is retained.','wrong-account':'Wrong account. Select the intended school account.','blocked':'Source access is blocked. Saved coursework is retained.'};
-  const label=manual?'Manual source; no live school connection.':!connectionVerified?labels[source.connection.state]:source.provider==='google-drive'?'Google Drive materials access was verified. Classroom access is not established.':`${source.provider==='unknown'?'Portal verified; service not identified.':'Source connection was verified.'} ${checkedCount} scope checks recorded${gaps.length?`; ${gaps.length} gaps remain`:'. Course access is limited to the recorded checks.'}`;
+  const label=manual?'Manual source; no live school connection.':!connectionVerified?labels[source.connection.state]:source.provider==='google-drive'?'Google Drive materials access was verified. Classroom access is not established.':`${source.provider==='unknown'?'Portal verified; service not identified.':'Source connection was verified.'} ${checkedCount} areas checked. Other school information may come from another source.`;
   return {label,connectionVerified,checkedCount,gaps,canRefresh:connectionVerified};
 }
 export function dateInTimezone(now = new Date(), zone = "UTC") {

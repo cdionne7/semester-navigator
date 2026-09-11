@@ -26,8 +26,8 @@ existing 0.2 student workspace for school connections” below. Do not wait for
 the optional after-planning update when the requested feature needs new code.
 
 The normal desktop route uses a prebuilt dashboard bundled with the
-[v0.3.0-beta.1 release](https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.0-beta.1).
-For an initial download, use its `semester-navigator-plugin-v0.3.0.zip` and verify
+[v0.3.1-beta.1 release](https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.1-beta.1).
+For an initial download, use its `semester-navigator-plugin-v0.3.1.zip` and verify
 the accompanying `.zip.sha256` before extraction. Do not substitute the older default-branch
 installer or a GitHub source archive for this prebuilt plugin bundle.
 It does not require Git, GitHub CLI, GitHub sign-in, a system Node installation,
@@ -167,7 +167,7 @@ compatible runtime or the student's existing compatible portable runtime:
 ```text
 node <verified-0.3-template>/scripts/update-semester-navigator.mjs
   --root <existing-student-root> --mode student
-  --raw-root https://raw.githubusercontent.com/cdionne7/semester-navigator/v0.3.0-beta.1
+  --raw-root https://raw.githubusercontent.com/cdionne7/semester-navigator/v0.3.1-beta.1
   --allow-offline no
 ```
 

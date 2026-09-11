@@ -270,6 +270,15 @@ export async function bootstrapStudentSite(options) {
   if (options.ageEligible !== true) {
     fail("A student Site cannot be prepared until age eligibility is confirmed as yes.");
   }
+  const physicalStudentRoot = await physicalPath(studentRoot);
+  for (const candidateRoot of new Set([studentRoot, physicalStudentRoot])) {
+    for (let ancestor = dirname(candidateRoot); ; ancestor = dirname(ancestor)) {
+      if (await pathExists(join(ancestor, ".semester-navigator", "profile.json"))) {
+        fail("studentRoot is inside another student workspace. Choose a separate sibling folder so each student's project contains only their own records. Nothing was overwritten.");
+      }
+      if (dirname(ancestor) === ancestor) break;
+    }
+  }
   if (await pathExists(studentRoot)) {
     if (!(await pathExists(join(studentRoot, ".semester-navigator", "profile.json")))) {
       fail(`studentRoot already exists but has no verified student profile. Nothing was overwritten: ${studentRoot}`);
@@ -279,7 +288,6 @@ export async function bootstrapStudentSite(options) {
   if (await pathExists(join(templateRoot, ".semester-navigator", "profile.json"))) {
     fail("Create a new student from the verified template package, never from another student's workspace.");
   }
-  const physicalStudentRoot = await physicalPath(studentRoot);
   const physicalTemplateRoot = await realpath(templateRoot);
   if (isWithin(physicalStudentRoot, physicalTemplateRoot) || isWithin(physicalTemplateRoot, physicalStudentRoot)) {
     fail("studentRoot must be separate from the canonical template root.");

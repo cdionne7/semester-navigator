@@ -65,10 +65,12 @@ async function inspectRoot(requestedRoot) {
       ),
       profile.profile_id,
     );
-    if (seed.name !== profile.display_name)
-      throw new Error(
-        "The dashboard seed name does not match this student. Review the source import before continuing.",
-      );
+    for (const [field, profileField] of [["name", "display_name"], ["school", "school"], ["semester", "semester"]]) {
+      if (profile[profileField] && seed[field] !== profile[profileField])
+        throw new Error(
+          `The dashboard seed ${field} does not match this student workspace. Review the source import before continuing.`,
+        );
+    }
     return seed;
   };
   await readSeed();

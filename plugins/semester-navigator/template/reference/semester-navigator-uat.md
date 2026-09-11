@@ -1,10 +1,17 @@
 # Semester Navigator acceptance evidence
 
-Review dates: 2026-09-08 and 2026-09-09. The first recorded checks below describe the upload-based beta. Connected desktop setup has separate acceptance cases and evidence in [the connected-source review](https://github.com/cdionne7/semester-navigator/blob/v0.3.0-beta.1/reviews/connected-source-acceptance.md). This file distinguishes observed results from required
+Latest review: September 10, 2026. The [full autonomous student review](https://github.com/cdionne7/semester-navigator/blob/v0.3.1-beta.1/reviews/2026-09-10-full-student-acceptance.md)
+records actual college and high-school browser/setup/coaching journeys,
+corrective adversarial loops, and the exact limits of the evidence. Both
+journeys used synthetic school accounts. Real school authorization, native
+project selection, and student-seen reminder delivery are not established.
+
+The historical checks below describe the September 8 upload-based beta.
+The September 9 connected desktop cases have separate evidence in [the connected-source review](https://github.com/cdionne7/semester-navigator/blob/v0.3.0-beta.1/reviews/connected-source-acceptance.md). This file distinguishes observed results from required
 checks. A build passing, an instruction mentioning a safeguard, or a historical
 GPT conversation is not evidence that a student completed installation.
 
-## Recorded checks
+## Historical recorded checks
 
 | Check | Evidence/status |
 |---|---|
@@ -13,7 +20,7 @@ GPT conversation is not evidence that a student completed installation.
 | Playbook reference integrity | All skill Markdown references resolved; generated-context templates no longer contain empty tracker/status/source placeholder rows. |
 | High-school forward walkthrough | First plan, date integrity, rubric feedback, and unscheduled reminder labeling passed with zero extra questions. Found and fixed a real first-import rejection of valid microsecond ISO timestamps. The original unchanged artifact then passed actual normalization, revision-checked import/save, and readback in an isolated adapter. See the [walkthrough evidence](https://github.com/cdionne7/semester-navigator/blob/v0.2.0-beta.1/reviews/high-school-forward-loop.md). |
 | Import preview while a save is pending | Real Chromium test first reproduced HTTP 409: an assignment save completed at revision 1, then an older import preview sent `baseRevision: 1` with `plan.revision: 0`, incorrectly disabling edits as a conflict. After the editor stamped current revision metadata, `npx playwright test tests/e2e/import-race.spec.mjs --workers=1 --output=/tmp/semester-import-race-final-e2e` passed (1 test). Both writes succeeded with matching revisions; imported source dates and the new manual assignment survived API readback and browser reload. |
-| Current application/model/runtime suites | `npm test` builds both runtimes, regenerates the release, and runs model, real HTTP, hosted-route, updater, bootstrap, and ZIP tests. Final local run: 75 passed, one native-Windows test skipped on macOS. TypeScript and ESLint passed; the dependency audit reported zero vulnerabilities. |
+| September 8 application/model/runtime suites | `npm test` builds both runtimes, regenerates the release, and runs model, real HTTP, hosted-route, updater, bootstrap, and ZIP tests. That local run: 75 passed, one native-Windows test skipped on macOS. TypeScript and ESLint passed; the dependency audit reported zero vulnerabilities. |
 | Detached release ZIP setup | `tests/distribution.test.mjs` extracts and verifies the actual ZIP, bootstraps college and high-school roots without npm dependencies, removes the source bundle, and starts each student root. Passed. The independent college browser/API walkthrough also saved, refreshed, and reopened without its source bundle. |
 | Native Windows clean-machine setup | [Run 34285203832](https://github.com/cdionne7/semester-navigator/actions/runs/34285203832) passed at `76d30e6`: portable runtime install with no Git/Node/npm on PATH, intentional dependency failure, fresh-process resume, unchanged source baseline after isolated verification, fresh launcher/lint, and independent student startup after removing the template. Its Node suite passed 68 checks with one platform-specific alias skip. |
 | Hosted runtime | An isolated generated college workspace passed `npm ci` and `npm test` (25 tests). Its actual built Worker and local D1 accepted a browser save, retained it on reload and server restart, and rejected a stale revision with HTTP 409. This is runtime evidence, not live Sites account-access verification. |

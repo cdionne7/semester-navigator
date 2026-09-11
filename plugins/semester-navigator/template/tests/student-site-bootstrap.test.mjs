@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { normalizePlan, mergeImportedPlan, recordSourceCheck, expireSourceAccess } from "../lib/plan-model.mjs";
+import { startStudentServer } from "../scripts/serve-student.mjs";
 import { bootstrapStudentSite, prepareStudentSite, validateIntake } from "../lib/student-site-bootstrap.mjs";
 import {
   inspectStudentSite,
@@ -40,6 +42,30 @@ function setupOptions(temporaryRoot, instanceKey) {
     today: "2026-08-23",
   };
 }
+
+test("another student's project cannot contain a new student root, including through an alias", async (context) => {
+  const temporaryRoot = await mkdtemp(join(tmpdir(), "semester-navigator-nested-isolation-"));
+  context.after(() => rm(temporaryRoot, { recursive: true, force: true }));
+  const parent = await bootstrapStudentSite(setupOptions(temporaryRoot, "daughter"));
+  const profilePath = join(parent.student_root, ".semester-navigator", "profile.json");
+  const before = await readFile(profilePath, "utf8");
+  const options = setupOptions(temporaryRoot, "son");
+  const nested = join(parent.student_root, "classes", "alex-semester");
+  await assert.rejects(() => bootstrapStudentSite({ ...options, studentRoot: nested }), /inside another student workspace/);
+  await assert.rejects(() => readFile(join(nested, ".semester-navigator", "profile.json")), /ENOENT/);
+  const alias = join(temporaryRoot, "jordan-alias");
+  await symlink(parent.student_root, alias, process.platform === "win32" ? "junction" : "dir");
+  await assert.rejects(() => bootstrapStudentSite({ ...options, studentRoot: join(alias, "alex-semester") }), /inside another student workspace/);
+  const external = join(temporaryRoot, "outside-parent");
+  await mkdir(external);
+  const outwardAlias = join(parent.student_root, "linked-folder");
+  await symlink(external, outwardAlias, process.platform === "win32" ? "junction" : "dir");
+  await assert.rejects(() => bootstrapStudentSite({ ...options, studentRoot: join(outwardAlias, "alex-semester") }), /inside another student workspace/);
+  await assert.rejects(() => readFile(join(external, "alex-semester", ".semester-navigator", "profile.json")), /ENOENT/);
+  assert.equal(await readFile(profilePath, "utf8"), before);
+  const sibling = await bootstrapStudentSite(options);
+  assert.equal(sibling.profile_id, options.profileId);
+});
 
 test("son and daughter bootstraps create isolated fresh Site projects", async (context) => {
   const temporaryRoot = await mkdtemp(join(tmpdir(), "semester-navigator-isolation-"));
@@ -300,4 +326,40 @@ test("a directory alias cannot put a student inside the canonical template", asy
   const alias = join(root,"template-alias");
   await symlink(templateRoot,alias,process.platform === "win32" ? "junction" : "dir");
   await assert.rejects(() => bootstrapStudentSite({...setupOptions(root,"son"),studentRoot:join(alias,"student-must-not-be-created")}), /separate from the canonical template/);
+});
+
+test('generated sibling roots and two servers for one root keep saves isolated across refresh, term errors and restart',async()=>{
+ const put=(url,input)=>fetch(`${url}/api/plan`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(input)});
+ const parent=await mkdtemp(join(tmpdir(),'semester-generated-adversarial-'));const runtimes=[];
+ const close=async runtime=>{if(runtime.server.listening)await new Promise(resolve=>runtime.server.close(resolve));};
+ const read=async runtime=>{const response=await fetch(`${runtime.url}/api/plan`);assert.equal(response.status,200);return response.json();};
+ try{
+  for(const profileId of ['synthetic-alex','synthetic-jordan']){
+   const root=join(parent,profileId);const plan=normalizePlan({profileId,name:profileId,school:'Synthetic school',semester:'Fall 2026',timezone:'America/New_York',courses:[{id:'math',name:'Math',grade:'88%',goalGrade:90,gradingComponents:[{id:'exam',title:'Exam',weight:100,score:44,possible:50,finalized:true}]}],tasks:[{id:'hw',courseId:'math',title:'Fall homework',dueAt:'2026-10-10',state:'done',rubric:'Show each step',notes:`${profileId} private draft`}]});
+   await bootstrapStudentSite({templateRoot:resolve('.'),studentRoot:root,profileId,displayName:plan.name,school:plan.school,semester:plan.semester,timezone:plan.timezone,ageEligible:true,sharedChatgptAccount:true,intake:{schema_version:1,verified:true,plan},prepare:false});
+   runtimes.push(await startStudentServer({root,port:0}));
+  }
+  const [alex,jordan]=runtimes;const otherAlex=await startStudentServer({root:alex.root,port:0});runtimes.push(otherAlex);
+  const first=await read(alex);const second=await read(otherAlex);const sibling=await read(jordan);
+  assert.notEqual(alex.url,jordan.url);assert.notEqual(alex.url,otherAlex.url);
+  assert.equal((await put(jordan.url,{plan:first.plan,baseRevision:0})).status,400);
+  first.plan.tasks[0].notes='Alex window one draft';second.plan.tasks[0].notes='Alex window two draft';
+  const competing=await Promise.all([put(alex.url,{plan:first.plan,baseRevision:0}),put(otherAlex.url,{plan:second.plan,baseRevision:0})]);assert.deepEqual(competing.map(response=>response.status).sort(),[200,409]);
+  assert.equal((await put(jordan.url,{plan:sibling.plan,baseRevision:0})).status,200);
+  let current=await read(alex);const savedTask=structuredClone(current.plan.tasks[0]);const savedCourse=structuredClone(current.plan.courses[0]);const planPath=join(alex.root,'.semester-navigator/plan.json');let before=await readFile(planPath,'utf8');
+  assert.throws(()=>mergeImportedPlan(current.plan,{profileId:current.plan.profileId,semester:'Spring 2027',courses:[{id:'spring',name:'Spring class'}],tasks:[{id:'spring-task',courseId:'spring',title:'Spring task'}]}),/Spring 2027.*Fall 2026/);
+  assert.equal(await readFile(planPath,'utf8'),before);
+  const checkedAt='2026-09-10T14:00:00Z';const connection={state:'verified',tool:'synthetic-browser',evidence:'Read synthetic account page',checkedAt,expectedIdentity:'alex@example.invalid',observedIdentity:'alex@example.invalid',identityStorageApproved:true};const scope={courseId:'math',scope:'assignments',status:'checked',checkedAt,evidence:'Read final synthetic assignment page',pagesChecked:1,paginationComplete:true,itemCount:1};
+  let sourcePlan=recordSourceCheck(current.plan,{profileId:current.plan.profileId,source:{id:'school',provider:'brightspace',accessMode:'browser',connection,coverage:[scope]}});
+  sourcePlan=expireSourceAccess(sourcePlan,{profileId:current.plan.profileId,sourceId:'school',checkedAt:'2026-09-10T15:00:00Z'});
+  assert.equal((await put(alex.url,{plan:sourcePlan,baseRevision:current.revision})).status,200);current=await read(alex);before=await readFile(planPath,'utf8');
+  assert.throws(()=>recordSourceCheck(current.plan,{profileId:current.plan.profileId,source:{id:'school',connection,coverage:[scope]}}),/older than the latest saved connection/);
+  assert.equal(await readFile(planPath,'utf8'),before);
+  // A copied next-term seed must fail before changing either runtime identity or durable work.
+  const seedPath=join(alex.root,'app/student-seed.json');const originalSeed=await readFile(seedPath,'utf8');await writeFile(seedPath,JSON.stringify({...JSON.parse(originalSeed),semester:'Spring 2027'}));
+  assert.equal((await fetch(`${alex.url}/api/profile`)).status,500);assert.equal((await fetch(`${alex.url}/api/plan`)).status,500);assert.equal(await readFile(planPath,'utf8'),before);await writeFile(seedPath,originalSeed);
+  await close(alex);await close(otherAlex);const reopened=await startStudentServer({root:alex.root,port:0});runtimes.push(reopened);const resumed=await read(reopened);
+  assert.deepEqual(resumed.plan.tasks[0],savedTask);assert.deepEqual(resumed.plan.courses[0],savedCourse);assert.equal(resumed.plan.sources[0].connection.state,'needs-sign-in');assert.equal(resumed.plan.sources[0].coverage[0].status,'unknown');assert.equal(resumed.plan.semester,'Fall 2026');
+  assert.deepEqual((await read(jordan)).plan.tasks,sibling.plan.tasks);
+ }finally{for(const runtime of runtimes)await close(runtime);await rm(parent,{recursive:true,force:true});}
 });

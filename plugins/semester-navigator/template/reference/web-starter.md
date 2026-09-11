@@ -1,6 +1,6 @@
 # Semester Navigator web starter
 
-This starter accompanies [Semester Navigator v0.3.0-beta.1](https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.0-beta.1).
+This starter accompanies [Semester Navigator v0.3.1-beta.1](https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.1-beta.1).
 Use this file without a plugin. In ChatGPT on the web, start a Work task when
 available, attach this file and one syllabus or assignment prompt, and say:
 “Use this starter to set up my semester.” Ordinary chat can still produce a
@@ -144,7 +144,7 @@ not Classroom enrollment, assignment, grade, or rubric coverage. Keep gaps
 explicit and preserve saved coursework after a source session expires.
 
 The schema for this starter is the beta release's
-[plan model](https://github.com/cdionne7/semester-navigator/blob/v0.3.0-beta.1/lib/plan-model.mjs).
+[plan model](https://github.com/cdionne7/semester-navigator/blob/v0.3.1-beta.1/lib/plan-model.mjs).
 Use that version when creating or importing this beta's artifacts; the default
 repository branch may still contain an older implementation.
 If a student provides a newer dashboard export, preserve its profile ID and
@@ -193,7 +193,7 @@ If the student requests a private website, first check available ChatGPT Work
 and Sites tools. Explain the confirmed access/plan limitation if unavailable and
 keep the tracker usable. If available, use a fresh student-specific hosted
 workspace, private owner-only audience, and durable student-specific storage.
-Use the [matching beta application source](https://github.com/cdionne7/semester-navigator/tree/v0.3.0-beta.1),
+Use the [matching beta application source](https://github.com/cdionne7/semester-navigator/tree/v0.3.1-beta.1),
 or its release bundle, instead of the repository default branch. If that version
 is unavailable, keep the tracker usable and report the missing source.
 Do not require a local computer or reuse the template's hosting ID. Verify the

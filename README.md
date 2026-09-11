@@ -11,13 +11,13 @@ as a student's Site.
 
 ## Start here
 
-Forward this one link: [Semester Navigator beta setup](https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.0-beta.1).
+Forward this one link: [Semester Navigator beta setup](https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.1-beta.1).
 It provides the desktop bundle, its checksum, and the standalone web starter.
 On desktop, use the school-connection prompt below. No parent configuration,
 prepared course list, known portal name, or uploaded syllabus is required.
 The separate web starter can begin from an uploaded syllabus or assignment.
 
-This entry targets **v0.3.0-beta.1**. If its page or downloads are unavailable,
+This entry targets **v0.3.1-beta.1**. If its page or downloads are unavailable,
 do not substitute the repository's `main` branch, the old Windows installer,
 or an unpublished draft release. The beta source and instructions must travel
 together.
@@ -30,7 +30,7 @@ and paste:
 
 ```text
 Set up Semester Navigator for me from:
-https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.0-beta.1
+https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.1-beta.1
 
 Ask me which school I attend, then help me connect the school accounts and
 websites I actually use, one question or sign-in step at a time. Find my current
@@ -85,7 +85,7 @@ Open ChatGPT, preferably Work when available, attach one syllabus, and paste:
 
 ```text
 Use this Semester Navigator web starter with my attached syllabus:
-https://raw.githubusercontent.com/cdionne7/semester-navigator/v0.3.0-beta.1/reference/web-starter.md
+https://raw.githubusercontent.com/cdionne7/semester-navigator/v0.3.1-beta.1/reference/web-starter.md
 
 First show my nearest confirmed deadline and one useful thing I can do today.
 Ask only for missing information. Keep unknown dates and grades unknown. Save
@@ -96,7 +96,7 @@ reminders, and a private Site optional. If you cannot read the starter link,
 begin from the syllabus and tell me to attach the downloaded web-starter.md.
 ```
 
-If needed, download [web-starter.md](https://github.com/cdionne7/semester-navigator/releases/download/v0.3.0-beta.1/web-starter.md)
+If needed, download [web-starter.md](https://github.com/cdionne7/semester-navigator/releases/download/v0.3.1-beta.1/web-starter.md)
 from the same beta page and attach it to ChatGPT. It needs no custom GPT or
 plugin installation. The [repository copy](reference/web-starter.md) documents
 the complete portable tracker/import format. ChatGPT must state where the
@@ -162,7 +162,7 @@ npm run plugin:build
 ```
 
 `plugin:build` refreshes `plugins/semester-navigator/template/` and writes
-`artifacts/semester-navigator-plugin-v0.3.0.zip`. The archive has one
+`artifacts/semester-navigator-plugin-v0.3.1.zip`. The archive has one
 `semester-navigator/` root containing `.agents/plugins/marketplace.json` and the
 complete `plugins/semester-navigator/` directory. Do not distribute a plugin
 folder that lacks its template or prebuilt dashboard.
@@ -180,6 +180,7 @@ Implementation entry points:
 - [Student bootstrap](scripts/bootstrap-student-site.mjs) and [runtime launcher](scripts/run-semester.ps1)
 - [Plan schema and normalization](lib/plan-model.mjs), [local server](scripts/serve-student.mjs), and [hosted API](app/api/plan/route.ts)
 - [Acceptance evidence and remaining checks](reference/semester-navigator-uat.md)
+- [September 10 autonomous student review](https://github.com/cdionne7/semester-navigator/blob/v0.3.1-beta.1/reviews/2026-09-10-full-student-acceptance.md)
 - [Legacy GPT migration](reference/semester-navigator-gpt.md)
 
 Student bootstraps default to a generic student instance. Legacy family instance
