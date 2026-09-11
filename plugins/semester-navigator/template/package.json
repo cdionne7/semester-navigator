@@ -1,6 +1,6 @@
 {
   "name": "semester-navigator",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -18,7 +18,7 @@
     "student:record-site": "node scripts/record-student-site.mjs",
     "student:record-access": "node scripts/record-student-site-access.mjs",
     "build:dashboard": "vite build --config vite.dashboard.config.ts",
-    "test:unit": "node --test tests/*.test.mjs plugins/semester-navigator/scripts/*.test.mjs",
+    "test:unit": "node --test tests/*.test.mjs tests/acceptance/*.test.mjs plugins/semester-navigator/scripts/*.test.mjs",
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "plugin:build": "node scripts/build-plugin.mjs",

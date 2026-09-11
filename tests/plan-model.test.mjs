@@ -195,3 +195,44 @@ test('source check and expiry operations remain bound to independent student pla
  assert.throws(()=>expireSourceAccess(second,{profileId:first.profileId,sourceId:'school',checkedAt:sourceTime}),/different student profile/);
  expireSourceAccess(first,{profileId:first.profileId,sourceId:'school',checkedAt:'2026-09-09T18:00:00Z'});assert.deepEqual(second,secondBefore);assert.equal(second.sources[0].connection.expectedIdentity,'other@example.invalid');
 });
+test('new-term imports cannot mix coursework under the current term, including a changed seed',()=>{
+ const current=normalizePlan({...fixture(),semester:'Fall 2026'});
+ const spring=normalizePlan({...current,semester:'Spring 2027',courses:[{id:'spring',name:'Spring course'}],tasks:[{id:'spring-task',courseId:'spring',title:'Spring task'}]});
+ assert.throws(()=>mergeImportedPlan(current,spring),/Spring 2027.*Fall 2026/);
+ assert.throws(()=>mergeImportedPlan(current,spring,current),/own student workspace/);
+ assert.deepEqual(mergeImportedPlan(current,{profileId:current.profileId,semester:' fall   2026 ',courses:[],tasks:[]}).tasks,current.tasks);
+ assert.deepEqual(mergeImportedPlan(current,{profileId:current.profileId,courses:[],tasks:[]}).tasks,current.tasks);
+ // An unchanged old seed must not undo a separately reviewed label correction.
+ const corrected={...current,semester:'Autumn 2026'};
+ assert.equal(mergeImportedPlan(corrected,current,current).semester,'Autumn 2026');
+});
+test('delayed source recorder results cannot reverse expiry or newer scope reads',()=>{
+ const original=connect(sourcePlan());const expired=expireSourceAccess(original,{profileId:original.profileId,sourceId:'school',checkedAt:'2026-09-09T15:00:00Z'});const before=structuredClone(expired);
+ assert.throws(()=>recordSourceCheck(expired,{profileId:original.profileId,source:{id:'school',connection:sourceConnection(),coverage:[sourceScope('math','assignments')]}}),/older than the latest saved connection/);
+ assert.deepEqual(expired,before);
+ const resumed=recordSourceCheck(expired,{profileId:original.profileId,source:{id:'school',connection:sourceConnection({checkedAt:'2026-09-09T16:00:00Z'})}});
+ assert.throws(()=>recordSourceCheck(resumed,{profileId:original.profileId,source:{id:'school',coverage:[sourceScope('math','assignments')]}}),/older than a saved scope or connection/);
+ const later=recordSourceCheck(resumed,{profileId:original.profileId,source:{id:'school',coverage:[sourceScope('math','assignments',{checkedAt:'2026-09-09T17:00:00Z',itemCount:4})]}});
+ assert.throws(()=>recordSourceCheck(later,{profileId:original.profileId,source:{id:'school',coverage:[sourceScope('math','assignments',{checkedAt:'2026-09-09T16:30:00Z'})]}}),/older than a saved scope/);
+ assert.throws(()=>expireSourceAccess(later,{profileId:original.profileId,sourceId:'school',checkedAt:'2026-09-09T16:45:00Z'}),/predates a successful saved read/);
+ const disjoint=recordSourceCheck(later,{profileId:original.profileId,source:{id:'school',coverage:[sourceScope('english','materials',{checkedAt:'2026-09-09T16:30:00Z'})]}});
+ assert.equal(disjoint.sources[0].lastChecked,'2026-09-09T17:00:00.000Z');assert.deepEqual(disjoint.tasks,original.tasks);
+});
+test('undated failure callbacks cannot invalidate newer verified coursework',()=>{
+ const original=connect(sourcePlan());
+ const later=recordSourceCheck(original,{profileId:original.profileId,source:{id:'school',coverage:[sourceScope('math','assignments',{checkedAt:'2026-09-09T17:00:00Z'})]}});
+ const before=structuredClone(later);
+ for(const connection of [{state:'blocked'},{state:'needs-sign-in'},{state:'wrong-account'},{state:'unverified'},{observedIdentity:'sibling@example.invalid'}]) {
+  assert.throws(()=>recordSourceCheck(later,{profileId:later.profileId,source:{id:'school',connection}}),/actual check timestamp/);
+  assert.deepEqual(later,before);
+  assert.throws(()=>recordSourceCheck(later,{profileId:later.profileId,source:{id:'school',connection:{...connection,checkedAt:'2026-09-09T16:00:00Z'}}}),/predates a successful saved read/);
+  assert.deepEqual(later,before);
+ }
+ assert.throws(()=>recordSourceCheck(later,{profileId:later.profileId,source:{id:'school',coverage:[{courseId:'math',scope:'assignments',status:'unknown'}]}}),/actual check timestamp/);
+ assert.deepEqual(later,before);
+ const failed=recordSourceCheck(later,{profileId:later.profileId,source:{id:'school',connection:{state:'blocked',checkedAt:'2026-09-09T18:00:00Z',lastError:'School access denied'}}});
+ assert.equal(failed.sources[0].connection.state,'blocked');
+ assert.equal(sourceCoverageSummary(failed.sources[0],['math']).checkedCount,0);
+ const clarified=recordSourceCheck(failed,{profileId:later.profileId,source:{id:'school',connection:{nextAction:'Use the school-supported sign-in method.'}}});
+ assert.equal(clarified.sources[0].connection.checkedAt,'2026-09-09T18:00:00.000Z');
+});

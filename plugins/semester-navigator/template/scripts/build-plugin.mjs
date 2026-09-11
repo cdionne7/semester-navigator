@@ -122,7 +122,7 @@ for (const path of canonical.filter((path) =>
   });
 const manifest = {
   schema_version: 1,
-  release: "2026.09.09.1",
+  release: "2026.09.10.1",
   repository: "https://github.com/cdionne7/semester-navigator",
   canonical_files: canonical,
   student_files: student,

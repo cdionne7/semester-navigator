@@ -878,7 +878,7 @@ export default function Home({
         </section>
         <details className="card source-details">
           <summary>Sources and what has been checked</summary>
-          <p className="fine">ChatGPT checks your approved school accounts when you ask. Opening this dashboard does not refresh them.</p>
+          <p className="fine">ChatGPT checks your approved school accounts when you ask. Opening this dashboard does not refresh them. Different sources can cover different parts of your schoolwork.</p>
           <div className="actions">
             <button onClick={() => requestHelp("connect")}>Connect or repair school access</button>
             <button onClick={() => requestHelp("refresh")}>Check school sources in ChatGPT</button>
