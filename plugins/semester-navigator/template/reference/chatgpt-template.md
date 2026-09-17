@@ -85,3 +85,12 @@ the runtime checkpoint or plan's source connection/coverage, as appropriate.
 The runtime `source_ready` state means intake was saved, not that all school
 context was read. Resume from that state in a new chat. Do not ask the student to
 remember commands, recopy a transcript, or recreate an existing workspace.
+
+## Independent phone use
+
+Read the bundled cloud reference for a requested computer-off workflow. A phone
+chat must use an authenticated saved cloud profile or the supported cloud
+browser. This local workspace is not available while its computer is off.
+Keep the stable profile ID during a verified migration and record the actual
+cloud dashboard URL after readback. Do not maintain two independently writable
+plans or infer cloud school access from this computer's sign-in.

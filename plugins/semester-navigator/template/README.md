@@ -22,6 +22,34 @@ do not substitute the repository's `main` branch, the old Windows installer,
 or an unpublished draft release. The beta source and instructions must travel
 together.
 
+## Computer-off phone workflow: acceptance candidate
+
+The cloud candidate adds one durable plan that the dashboard and authenticated
+chat tools both read and update. Open the same student profile from desktop or
+phone; no local server or Remote connection is required for the hosted plan.
+People sharing a ChatGPT account choose separate student profiles, but everyone
+on that account can access those profiles.
+
+The [private cloud acceptance site](https://semester-navigator-cloud.cbdionne.chatgpt.site/cloud)
+is deployed. Its [connection guide](https://semester-navigator-cloud.cbdionne.chatgpt.site/cloud/connect)
+provides a request for ChatGPT Work and the cloud plugin setup. This is **not yet
+an accepted mobile plugin release**: private hosting currently blocks anonymous
+OAuth discovery. Actual ChatGPT plugin connection, a cloud school session, and
+native phone use remain acceptance gates. The v0.3.2 release below is still the
+local desktop release; installing it alone does not add this cloud connection.
+
+The cloud setup asks which school you attend, guides the actual supported
+school connection, and saves source progress to your selected cloud profile.
+School browser sessions are separate between desktop and cloud. Saved course
+facts remain useful when access expires; the assistant must reverify school
+identity before a new source read. Reminders also need an actual cloud-capable
+schedule before promising delivery with the computer off.
+
+A cloud plan does not automatically import an existing local semester. Migrate
+it once with the same stable profile ID, verify the saved result, and continue
+using that cloud plan from both devices. Keep the existing local plan until
+that readback is confirmed. See the [cloud playbook](plugins/semester-navigator/skills/semester-navigator/references/cloud.md).
+
 ## Start on your computer
 
 Open a local Work or Codex task in the
@@ -87,7 +115,7 @@ request automatically. Use **Copy request** to stay in an existing chat.
 The dashboard picks up saved assistant changes while open, preserving any
 unsaved or conflicting browser edits.
 
-For your phone, use **Remote** in the ChatGPT mobile app. Pair it once from
+For the **released local desktop version**, use **Remote** in the ChatGPT mobile app. Pair it once from
 desktop **Settings → Connections → Control this Mac or PC**, then choose
 your computer and student project/chat on the phone. This uses the same saved
 plan, plugin, files and school connections. The computer must remain awake,
@@ -98,8 +126,10 @@ A local dashboard URL does not open on the phone. A private hosted dashboard
 can, but local and hosted plans do not automatically synchronize, and a phone
 cloud chat does not inherit the desktop's files or school login. Independent
 phone use while the laptop is off needs cloud-accessible context and an
-authorized plan connector, which this plugin does not yet provide. Remote is
-the supported continuation path for the desktop workspace.
+authorized plan connector. The cloud acceptance candidate above implements
+that separate service, but its real ChatGPT connection and native phone
+acceptance are still pending. Remote remains the continuation path for the
+released local desktop workspace.
 [Desktop link behavior](https://learn.chatgpt.com/docs/reference/commands#deep-links)
 
 [Windows details and legacy recovery](reference/windows-codex-bootstrap.md)
@@ -188,7 +218,7 @@ npm run plugin:build
 ```
 
 `plugin:build` refreshes `plugins/semester-navigator/template/` and writes
-`artifacts/semester-navigator-plugin-v0.3.2.zip`. The archive has one
+`artifacts/semester-navigator-plugin-v<package-version>.zip`. The archive has one
 `semester-navigator/` root containing `.agents/plugins/marketplace.json` and the
 complete `plugins/semester-navigator/` directory. Do not distribute a plugin
 folder that lacks its template or prebuilt dashboard.

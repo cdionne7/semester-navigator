@@ -89,7 +89,7 @@ test('web-generated ISO microseconds and nanoseconds import and normalize idempo
 test('provisional category averages cannot consume final course weight or imply a remaining-score target',()=>{
  const input={...fixture(),courses:[{id:'math',name:'Math',goalGrade:85,gradingComponents:[{id:'labs',title:'Labs',weight:50,score:88,possible:100},{id:'exam',title:'Final exam',weight:50,score:null,possible:100}]}]};
  const course=normalizePlan(input).courses[0];assert.equal(course.gradingComponents[0].finalized,false);
- let summary=gradeSummary(course);assert.equal(summary.current,88);assert.equal(summary.remainingWeight,100);assert.equal(summary.neededOnRemaining,null);assert.match(summary.warnings.join(' '),/provisional averages for unfinished work/);
+ let summary=gradeSummary(course);assert.equal(summary.current,88);assert.equal(summary.remainingWeight,100);assert.equal(summary.neededOnRemaining,null);assert.match(summary.warnings.join(' '),/weighted scores are provisional for unfinished work/);
  course.gradingComponents[0].finalized=true;summary=gradeSummary(course);assert.equal(summary.current,88);assert.equal(summary.remainingWeight,50);assert.equal(summary.neededOnRemaining,82);assert.deepEqual(summary.warnings,[]);
 });
 test('only finalized scored components reduce remaining weight when a second scored category is provisional',()=>{
@@ -179,6 +179,21 @@ test('serialized normalized partial source imports preserve established connecti
  const direct=structuredClone(original);direct.sources[0].connection.identityStorageApproved=false;
  assert.throws(()=>normalizePlan(direct),/unapproved account identifiers/);
 });
+test('a verified partial reconnect clears explicit resolved errors without reviving coverage or accepting stale checks',()=>{
+ const original=connect(sourcePlan());
+ const expired=expireSourceAccess(original,{profileId:original.profileId,sourceId:'school',checkedAt:'2026-09-09T15:00:00Z',reason:'Session expired'});
+ const patch={profileId:original.profileId,sources:[{id:'school',connection:{state:'verified',checkedAt:'2026-09-09T16:00:00Z',lastError:'',nextAction:''}}]};
+ const recovered=mergeImportedPlan(expired,patch);
+ assert.equal(recovered.sources[0].accessMode,'browser');assert.equal(recovered.sources[0].connection.state,'verified');
+ assert.equal(recovered.sources[0].connection.lastError,'');assert.equal(recovered.sources[0].connection.nextAction,'');
+ assert.equal(sourceCoverageSummary(recovered.sources[0],['math']).checkedCount,0);assert.deepEqual(recovered.tasks,expired.tasks);
+ const omitted=structuredClone(patch);delete omitted.sources[0].connection.lastError;delete omitted.sources[0].connection.nextAction;
+ assert.equal(mergeImportedPlan(expired,omitted).sources[0].connection.lastError,'Session expired');
+ const stale=structuredClone(patch);stale.sources[0].connection.checkedAt=sourceTime;
+ assert.deepEqual(mergeImportedPlan(expired,stale).sources,expired.sources);
+ const unverified=structuredClone(patch);unverified.sources[0].connection.state='unverified';
+ assert.equal(mergeImportedPlan(expired,unverified).sources[0].connection.lastError,'Session expired');
+});
 test('older source exports cannot undo expiry, login-only recovery, or newer scope checks',()=>{
  const original=connect(sourcePlan());const oldExport=JSON.parse(JSON.stringify(original));oldExport.tasks[0].title='Imported assignment correction';
  const expired=expireSourceAccess(original,{profileId:original.profileId,sourceId:'school',checkedAt:'2026-09-09T15:00:00Z',reason:'Session expired'});
@@ -235,4 +250,16 @@ test('undated failure callbacks cannot invalidate newer verified coursework',()=
  assert.equal(sourceCoverageSummary(failed.sources[0],['math']).checkedCount,0);
  const clarified=recordSourceCheck(failed,{profileId:later.profileId,source:{id:'school',connection:{nextAction:'Use the school-supported sign-in method.'}}});
  assert.equal(clarified.sources[0].connection.checkedAt,'2026-09-09T18:00:00.000Z');
+});
+
+test('reminder migration preserves scheduled records without inferring cloud execution', async () => {
+ const legacy={id:'legacy',title:'Start homework',schedule:'Weekdays at 4 PM',enabled:true,status:'scheduled',provider:'chatgpt',toolId:'confirmed-existing-tool-id',verifiedAt:'2026-09-17T12:00:00Z'};
+ const plan=normalizePlan({...fixture(),reminders:[legacy,{...legacy,id:'desktop',executionContext:'desktop'},{...legacy,id:'cloud',executionContext:'cloud'}]});
+ assert.deepEqual(plan.reminders.map(reminder=>reminder.executionContext),['unknown','desktop','cloud']);
+ for(const reminder of plan.reminders){assert.equal(reminder.status,'scheduled');assert.equal(reminder.enabled,true);assert.equal(reminder.toolId,legacy.toolId);assert.equal(reminder.verifiedAt,'2026-09-17T12:00:00.000Z');}
+ const store=memoryStore();const service=createPlanService(plan,store);const loaded=await service.load();await service.save({plan:loaded.plan,baseRevision:loaded.revision});
+ assert.deepEqual((await createPlanService(plan,store).load()).plan.reminders,plan.reminders);
+ assert.equal(normalizePlan({...fixture(),reminders:[{id:'idea'}]}).reminders[0].executionContext,'unknown');
+ assert.throws(()=>normalizePlan({...fixture(),reminders:[{...legacy,executionContext:'phone'}]}),/Reminder execution context/);
+ assert.throws(()=>normalizePlan({...fixture(),reminders:[{...legacy,executionContext:'cloud',toolId:null}]}),/confirmed tool ID/);
 });

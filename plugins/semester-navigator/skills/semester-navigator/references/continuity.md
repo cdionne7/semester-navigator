@@ -1,9 +1,25 @@
 # Desktop chat and phone continuity
 
-Use the student's existing private workspace as the source of truth. Read its
-profile and current saved plan in every fresh chat. A shared ChatGPT account
-does not merge the student folders, but it does not make them private from
-other people using that account either.
+Establish the student's authoritative plan before choosing a continuation path.
+For phone use with the computer off, a cloud request, or callable cloud plan
+tools, follow [cloud](cloud.md): list and load the explicitly selected profile
+before looking for local files. Verify the actual account, student, and term.
+People using a shared ChatGPT account can access its student plans; separate
+profiles prevent accidental mixing and do not create privacy between them.
+
+Use the local sections below only for an explicitly local workspace. Remote
+remains optional when the student wants to operate that computer.
+
+## Cloud: the same plan on phone and desktop
+
+Use the selected cloud plan's actual `dashboardUrl` and revision from the
+authenticated tools, or verify it in ChatGPT Work's authenticated cloud browser.
+The computer is not part of this storage path. A fresh chat must load that plan
+again; conversation memory and a copied request are not the current record.
+After a change, read it back and confirm it in the dashboard. See
+[cloud](cloud.md) for the acceptance candidate, actual connection checks, browser
+fallback, school sign-in, and recovery. Do not claim plugin directory or mobile
+installation availability that has not been observed.
 
 ## Desktop: dashboard beside the chat
 
@@ -36,12 +52,12 @@ current revision-checked plan API and read back the result. This refresh is
 between the dashboard and its own server; it is not school-source refresh or
 local-to-cloud synchronization.
 
-## Phone: continue the same desktop workspace
+## Optional Remote: continue an explicitly local desktop workspace
 
-After the first useful saved plan, offer phone access if requested. Check
-current app availability before claiming it is configured. The supported path
-is ChatGPT mobile **Remote**, using the same desktop host's projects, chats,
-files, plugins, school sign-ins and permissions.
+When the student chooses to continue their local workspace from a phone, check
+current app availability before claiming it is configured. ChatGPT mobile
+**Remote** uses that desktop host's projects, chats, files, plugins, school
+sign-ins and permissions. It does not meet a computer-off requirement.
 
 1. In the student's desktop app, open **Settings → Connections → Control this
    Mac or PC**, then **Set up** or **Add**.
@@ -64,18 +80,16 @@ copy of the dashboard.
 
 ## Phone use while the computer is unavailable
 
-Ask whether independent phone access is required. ChatGPT cloud Work can
-continue on supported desktop/web/mobile surfaces, but cannot directly read
-the student's local folder or use its browser session. Cloud-accessible
-context and appropriate authorized tools are required.
+Follow [cloud](cloud.md) without repeating an already stated computer-off
+requirement. Use the existing cloud profile through callable tools or the
+authenticated cloud dashboard. A local repository plugin does not establish
+that connection. If access is unavailable, state the actual gap and preserve
+the same plan rather than creating a competing copy.
 
-A private hosted dashboard can be used in a phone browser. This application's
-local file store and hosted D1 store are separate: matching profile IDs do not
-synchronize them. Nor does opening the private Site grant a phone chat API
-access. There is no authenticated plan connector in this plugin yet. Do not
-claim that a local repository plugin or generic chat link provides that bridge.
-Keep one authoritative plan and explain the actual missing connection; do not
-silently create a second writable plan or label a copied snapshot as live sync.
+The local file store and hosted store remain separate. Matching profile IDs
+do not synchronize them. A migration requires the actual local saved work,
+student authorization, a cloud import, and verified readback. A cloud browser
+cannot inherit the desktop's school session; verify its separate sign-in.
 
 Verified documentation, September 17, 2026:
 

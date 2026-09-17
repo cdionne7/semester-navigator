@@ -1,0 +1,32 @@
+import {test,expect,openDashboard,saved,readPlan} from './fixtures.mjs';
+test.use({viewport:{width:390,height:844}});
+
+test('saved item denominators and weighted components remain visible after reload while blocked grades stay incomplete',async({page,request,workspace},testInfo)=>{
+  await openDashboard(page,workspace);
+  const initial=await readPlan(request,workspace);
+  initial.plan.courses[0].gradeItems=[{id:'practice',title:'Practice lab',category:'Labs',score:18,possible:25,sourceUrl:'https://school.example/grades',notes:'Published item; no category average released.'}];
+  initial.plan.courses[0].gradingComponents=[{id:'labs',title:'Labs',weight:50,score:null,possible:100,finalized:false},{id:'final',title:'Final',weight:50,score:null,possible:100,finalized:false},{id:'legacy',title:'Legacy quiz points',weight:0,score:7,possible:10,finalized:false}];
+  initial.plan.sources=[{id:'portal',status:'manual',accessMode:'manual',verified:true,lastChecked:'2026-09-08T13:00:00Z',coverage:[{courseId:'math',scope:'grades',status:'blocked',checkedAt:'2026-09-08T13:00:00Z',evidence:'The instructor hides current grades and feedback.',pagesChecked:1,paginationComplete:true}]}];
+  expect((await request.put(workspace.url+'/api/plan',{data:{plan:initial.plan,baseRevision:initial.revision}})).status()).toBe(200);
+  await page.reload();await saved(page);
+  const course=page.locator('.course-card');
+  await expect(course.getByText('Missing information',{exact:true})).toBeVisible();
+  await expect(course.getByText('Grades are blocked.',{exact:true})).toBeVisible();
+  await course.getByText('Saved grade details',{exact:true}).click();
+  await expect(course.getByRole('heading',{name:'Published grade items'})).toBeVisible();
+  await expect(course.locator('li').filter({hasText:'Practice lab'})).toContainText('18/25');
+  await expect(course.getByRole('link',{name:'Grade source ↗',exact:true})).toHaveAttribute('href','https://school.example/grades');
+  await expect(course.locator('li').filter({hasText:'Legacy quiz points'})).toContainText('Unweighted saved record · 7/10');
+  await expect(course.locator('li').filter({has:page.getByText('Labs',{exact:true})})).toContainText('50% of course · Score not published · In progress');
+  await expect(course).not.toContainText('Calculated from supplied weighted scores:');
+  await course.getByRole('button',{name:'Edit class',exact:true}).click();
+  await page.getByLabel('Instructor',{exact:true}).fill('Updated instructor');
+  await page.getByRole('button',{name:'Save class',exact:true}).click();await saved(page);
+  await page.reload();await saved(page);await course.getByText('Saved grade details',{exact:true}).click();
+  await expect(course.locator('li').filter({hasText:'Practice lab'})).toContainText('18/25');
+  await expect(course.getByText('Missing information',{exact:true})).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+  await course.screenshot({path:testInfo.outputPath('grade-details-390px.png')});
+  const readback=await readPlan(request,workspace);
+  expect(readback.plan.courses[0].gradeItems[0]).toMatchObject({score:18,possible:25,category:'Labs'});
+});

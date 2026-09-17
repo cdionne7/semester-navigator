@@ -1,5 +1,19 @@
 # Semester Navigator acceptance evidence
 
+Cloud continuity work is under active acceptance testing. The new service is
+deployed owner-only at [Semester Navigator Cloud](https://semester-navigator-cloud.cbdionne.chatgpt.site/cloud).
+Real hosted sign-in, initial profile creation, class save and reload have been
+observed. SQLite/OAuth/browser integration tests cover both student personas.
+Actual ChatGPT plugin connection and native phone use are still release gates;
+a phone-width browser test is not proof of the native phone workflow.
+
+The [cloud continuity review](https://github.com/cdionne7/semester-navigator/blob/codex/cloud-student-continuity/reviews/2026-09-17-cloud-continuity.md)
+records independent college and high-school setup, interrupted-source recovery,
+full draft/rubric coaching, corrected deadlines, persistence and remaining
+phone-connection gates. These use simulated school accounts and real private
+hosted storage, not the children's school accounts.
+
+
 Latest continuity review: September 17, 2026. The [desktop and phone report](https://github.com/cdionne7/semester-navigator/blob/v0.3.2-beta.1/reviews/2026-09-17-desktop-phone-continuity.md)
 records folder-specific chat links, safe dashboard refresh, phone instructions,
 and their verification limits. Native composer inspection was blocked; actual
