@@ -1,10 +1,22 @@
-# Web-only starter
+# Web and phone without local setup
 
-A student can begin with a syllabus in ChatGPT without installing local tools.
-A public repository marketplace installation is not proof that a plugin is
-available in the web plugin directory. Do not claim automatic web installation.
+For a saved cloud plan, computer-off phone use, or a requested school
+connection, follow [cloud](cloud.md) first. Use callable cloud plan tools or the
+authenticated ChatGPT Work cloud browser, and load the intended student and
+term before creating anything. Local folders, desktop bootstrap, a parent,
+and uploads are not required steps in that route.
 
-Use this as the student-facing starter prompt when the local plugin cannot run:
+The cloud service is an acceptance candidate until the intended account's
+access and saves are verified. A repository marketplace installation is not
+proof of a cloud plugin connection or public-directory availability. A browser
+read does not prove MCP tools are installed.
+
+## Optional portable starter
+
+A student who chooses supplied course material can begin with a syllabus in
+ChatGPT without installing local tools. This remains useful when no authorized
+cloud storage is accessible, but is not a live synchronized cloud plan.
+Use this starter only for that choice:
 
 ```text
 Help me set up Semester Navigator from the course materials I attach. Ask only

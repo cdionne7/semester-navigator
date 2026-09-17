@@ -98,6 +98,9 @@ student.push(
   ),
 );
 student.push(".openai/hosting.example.json");
+// The cloud handler compiles in every Worker; its synthetic acceptance routes
+// remain disabled unless a dedicated maintainer deployment enables them.
+student.push("tests/acceptance/cloud-school.mjs", "tests/acceptance/school-data.mjs");
 student.push(
   "reference/agents-template.md",
   "reference/chatgpt-template.md",
@@ -122,7 +125,7 @@ for (const path of canonical.filter((path) =>
   });
 const manifest = {
   schema_version: 1,
-  release: "2026.09.17.1",
+  release: "2026.09.17.2",
   repository: "https://github.com/cdionne7/semester-navigator",
   canonical_files: canonical,
   student_files: student,

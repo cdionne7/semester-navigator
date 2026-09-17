@@ -42,9 +42,13 @@ Read the setup playbook for exact startup and recovery steps. The local URL
 works only on this computer; do not expose its server to the network.
 For dashboard-to-chat links or phone use, read the bundled
 `.semester-navigator/playbook/references/continuity.md`. A desktop handoff opens
-the verified student folder; mobile Remote uses the same host. A phone's
-ordinary cloud chat does not inherit local files or school browser sessions.
-Do not claim local/hosted plan synchronization or a live phone plan connector.
+the verified student folder. For phone use with the computer off, follow the
+cloud reference and select the existing cloud profile with authenticated tools
+or the cloud dashboard. Check actual connection availability. Ordinary phone
+chat does not inherit these local files or school browser sessions. An approved
+one-time migration must preserve this profile ID and be read back before the
+cloud plan becomes authoritative; independent local and cloud stores do not
+synchronize. Remote remains an option only for an explicitly chosen local path.
 
 A hosted Site is optional. Use only this workspace's verified project and
 hosting manifest, dedicated D1 storage, and private audience. Record Site and

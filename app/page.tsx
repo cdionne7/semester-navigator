@@ -109,9 +109,10 @@ function checkedTime(value: string | null, timezone: string) {
 
 export default function Home({
   initialPlan = initial,
-}: { initialPlan?: Plan } = {}) {
+  cloud,
+}: { initialPlan?: Plan; cloud?: {apiUrl:string;accountKey:string;dashboardUrl:string;serviceUrl:string} } = {}) {
   const [dialog, setDialog] = useState<Dialog>(null);
-  const store = usePlan(initialPlan, dialog !== null && dialog !== "support");
+  const store = usePlan(initialPlan, dialog !== null && dialog !== "support", cloud);
   const { plan, edit, canEdit } = store;
   const [view, setView] = useState<keyof typeof views>("today");
   const [showDone, setShowDone] = useState(false);
@@ -128,20 +129,27 @@ export default function Home({
   const [importPreview, setImportPreview] = useState<Plan | null>(null);
   const [helpRequest, setHelpRequest] = useState<{mode: string; taskId?: string; courseId?: string} | null>(null);
   const prompt = helpRequest
-    ? coachingPrompt(plan, helpRequest.mode, helpRequest.taskId, helpRequest.courseId)
+    ? (cloud ? coachingPrompt(plan, helpRequest.mode, helpRequest.taskId, helpRequest.courseId)
+      .replaceAll("ChatGPT desktop", "ChatGPT Work in the cloud")
+      .replaceAll("this desktop route", "this cloud route")
+      .replaceAll("Resume my saved workspace and setup checkpoint", "Resume my saved cloud profile and source checks")
+      .replaceAll("Reminders using local files need my computer on and ChatGPT running.", "Use a verified cloud schedule for reminders while my computer is off; do not create desktop-only reminders.")
+      : coachingPrompt(plan, helpRequest.mode, helpRequest.taskId, helpRequest.courseId)) + (cloud
+      ? `\n\nThis is my CLOUD plan. Use the connected Semester Navigator tools for profile ${JSON.stringify(plan.profileId)}. Load the current cloud revision before making changes and read it back after saving. Dashboard: ${cloud.dashboardUrl}. If the plugin is unavailable, use ChatGPT Work's cloud browser to open that dashboard, verify the student and term, read ${cloud.serviceUrl}/cloud/guide?profileId=${encodeURIComponent(plan.profileId)} for the current saved plan, setup and import contract, and use the saved plan there. Do not create a local copy or require my computer to be on. School sources need verified access in this cloud session; a desktop sign-in is not cloud access.`
+      : "")
     : "";
   const [runtime, setRuntime] = useState<unknown>(null);
   const [checkingRuntime, setCheckingRuntime] = useState(false);
   useEffect(() => {
     if (dialog !== "support") return;
     const controller = new AbortController();
-    void fetch("/api/runtime", {cache: "no-store", signal: controller.signal})
+    void fetch(cloud ? "/api/runtime?profileId="+encodeURIComponent(plan.profileId) : "/api/runtime", {cache: "no-store", signal: controller.signal})
       .then(async (response) => response.ok ? response.json() : null)
       .then((value: unknown) => { if (!controller.signal.aborted) setRuntime(value); })
       .catch(() => { /* Copying the request still works without local routing. */ })
       .finally(() => { if (!controller.signal.aborted) setCheckingRuntime(false); });
     return () => controller.abort();
-  }, [dialog, plan.profileId]);
+  }, [dialog, plan.profileId, cloud]);
   const desktopUrl = helpRequest && store.status === "saved"
     ? desktopChatUrl(runtime, plan, helpRequest.mode, helpRequest.taskId, helpRequest.courseId)
     : "";
@@ -159,9 +167,9 @@ export default function Home({
     setFormError("");
     setDialog(next);
   };
-  const change = (fn: (value: Plan) => Plan) => {
+  const change = async (fn: (value: Plan) => Plan) => {
     try {
-      edit(fn);
+      await edit(fn);
       return true;
     } catch (error) {
       setFormError(
@@ -170,7 +178,8 @@ export default function Home({
       return false;
     }
   };
-  const active = plan.tasks.filter((task) => task.state !== "done");
+  const requiredTasks = plan.tasks.filter((task) => !task.optional);
+  const active = requiredTasks.filter((task) => task.state !== "done");
   const unknown = active.filter((task) => !task.dueAt);
   const displayed = tasksForView(plan, view, now).filter(
     (task) =>
@@ -178,7 +187,7 @@ export default function Home({
       (showDone || task.state !== "done"),
   );
   const nextTask = tasksForView(plan, "semester", now).find(
-    (task) => task.state !== "done" && task.dueAt,
+    (task) => task.state !== "done" && !task.optional && task.dueAt,
   );
   const health = plan.courses.map((course) => ({
     course,
@@ -187,10 +196,13 @@ export default function Home({
   const attention = health.filter(
     (item) => item.health.status === "Needs attention",
   ).length;
-  const sourceSummaries = plan.sources.map((source) => ({
-    source,
-    summary: sourceCoverageSummary(source, plan.courses.map((course) => course.id)),
-  }));
+  const sourceSummaries = plan.sources.map((source) => {
+    const summary = sourceCoverageSummary(source, plan.courses.map((course) => course.id));
+    if (cloud && source.accessMode !== "manual" && source.connection.executionContext !== "cloud") {
+      return {source,summary:{...summary,connectionVerified:false,canRefresh:false,label:"Saved school information is available. Access from a cloud chat has not been verified.",gaps:["Verify the school account in ChatGPT Work's cloud browser or an available cloud connector.",...summary.gaps]}};
+    }
+    return {source,summary};
+  });
   const requiredSchoolChecks = [
     { courseId: null, scope: "course-list" },
     ...plan.courses.flatMap((course) =>
@@ -206,6 +218,7 @@ export default function Home({
     pending: "Changes waiting to save",
     conflict: "Another saved version needs review",
     unavailable: "Saved plan unavailable",
+    "auth-required": "Sign in to open your semester",
   };
   const exportPlan = () =>
     download("semester-navigator-backup.json", JSON.stringify(plan, null, 2));
@@ -236,7 +249,7 @@ export default function Home({
     open("course");
   };
 
-  function saveTask(event: FormEvent<HTMLFormElement>) {
+  async function saveTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const courseId = field(form, "courseId");
@@ -265,6 +278,7 @@ export default function Home({
       title: field(form, "title"),
       dueAt,
       minutes: Number(field(form, "minutes")),
+      optional: form.get("optional") === "on",
       state: selectedTask?.state || "next",
       reason: field(form, "reason"),
       sourceUrl: field(form, "sourceUrl"),
@@ -273,7 +287,7 @@ export default function Home({
       priority: field(form, "priority") || "normal",
     } as Task;
     if (
-      change((value) => ({
+      await change((value) => ({
         ...value,
         tasks: selectedTask
           ? value.tasks.map((item) => (item.id === task.id ? task : item))
@@ -286,7 +300,7 @@ export default function Home({
       );
     }
   }
-  function saveCourse(event: FormEvent<HTMLFormElement>) {
+  async function saveCourse(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const course = {
@@ -301,6 +315,7 @@ export default function Home({
         : null,
       resources: selectedCourse?.resources || [],
       gradingComponents: selectedCourse?.gradingComponents || [],
+      gradeItems: selectedCourse?.gradeItems || [],
     } as Course;
     const url = field(form, "resourceUrl");
     if (url) {
@@ -319,7 +334,7 @@ export default function Home({
       ];
     }
     if (
-      change((value) => ({
+      await change((value) => ({
         ...value,
         courses: selectedCourse
           ? value.courses.map((item) => (item.id === course.id ? course : item))
@@ -335,8 +350,7 @@ export default function Home({
   }
   function previewImport() {
     try {
-      const imported = normalizePlan(JSON.parse(importText), plan.profileId);
-      setImportPreview(mergeImportedPlan(plan, imported));
+      setImportPreview(mergeImportedPlan(plan, JSON.parse(importText)));
       setFormError("");
     } catch (error) {
       setFormError(
@@ -345,11 +359,11 @@ export default function Home({
       setImportPreview(null);
     }
   }
-  function saveSettings(event: FormEvent<HTMLFormElement>) {
+  async function saveSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     if (
-      change((value) => ({
+      await change((value) => ({
         ...value,
         theme: field(form, "theme") as Plan["theme"],
         accentColor: field(form, "accentColor"),
@@ -358,7 +372,7 @@ export default function Home({
     )
       close();
   }
-  function removeSelected() {
+  async function removeSelected() {
     const course = dialog === "course" ? selectedCourse : null;
     const tasks = course
       ? plan.tasks.filter((task) => task.courseId === course.id)
@@ -371,7 +385,7 @@ export default function Home({
     if (!label || !window.confirm("Remove " + label + " from this plan?"))
       return;
     if (
-      change((value) => ({
+      await change((value) => ({
         ...value,
         courses: course
           ? value.courses.filter((item) => item.id !== course.id)
@@ -386,10 +400,10 @@ export default function Home({
       setNotice("Removed from your plan. You can undo this removal.");
     }
   }
-  function undoRemoval() {
+  async function undoRemoval() {
     if (!removed) return;
     if (
-      change((value) => ({
+      await change((value) => ({
         ...value,
         courses:
           removed.course &&
@@ -410,6 +424,10 @@ export default function Home({
   }
   const dueParts = localDueParts(selectedTask?.dueAt || null, plan.timezone);
 
+  if (cloud && store.status === "auth-required") {
+    return <main className="shell"><h1>Sign in to open your semester</h1><p>Your signed-in account changed. Choose your student plan again.</p><a href="/cloud">Open my semesters</a></main>;
+  }
+
   return (
     <main
       className={"app " + (plan.theme === "dark" ? "dark" : "")}
@@ -429,6 +447,7 @@ export default function Home({
             </p>
           </div>
           <div className="actions">
+            {cloud && <a href="/cloud">All students</a>}
             <button onClick={exportPlan}>Export backup</button>
             <button onClick={() => open("settings")} disabled={!canEdit}>
               Preferences
@@ -531,7 +550,7 @@ export default function Home({
                     ? "Add one class and its next assignment"
                     : !plan.tasks.length
                       ? "Add your next assignment"
-                      : "Your known work is complete")}
+                      : "Your known required work is complete")}
             </h2>
             <p>
               {nextTask
@@ -589,9 +608,9 @@ export default function Home({
         </section>
         <section className="metrics" aria-label="Semester totals">
           {[
-            [active.length, "assignments left"],
-            [unknown.length, "unknown deadlines"],
-            [plan.tasks.length - active.length, "completed"],
+            [active.length, "required assignments left"],
+            [unknown.length, "unknown required deadlines"],
+            [requiredTasks.length - active.length, "required completed"],
             [plan.courses.length, "classes"],
           ].map(([count, label]) => (
             <div key={label}>
@@ -677,7 +696,7 @@ export default function Home({
                       task.title
                     }
                     onClick={() =>
-                      change((value) => ({
+                      void change((value) => ({
                         ...value,
                         tasks: value.tasks.map((item) =>
                           item.id === task.id
@@ -695,7 +714,8 @@ export default function Home({
                   <div className="task-main">
                     <span className="task-course">{task.course}</span>
                     <h3>{task.title}</h3>
-                    <p className={!task.dueAt ? "unknown" : ""}>
+                    {task.optional && <span className="badge">Optional</span>}
+                    <p className={!task.dueAt && !task.optional ? "unknown" : ""}>
                       {formatDue(task, plan.timezone, now)} ·{" "}
                       {task.minutes ? task.minutes + " min" : "Estimate needed"}
                       {task.priority === "high" ? " · High priority" : ""}
@@ -769,7 +789,7 @@ export default function Home({
                       <dd>{course.grade || "Not provided"}</dd>
                     </div>
                     <div>
-                      <dt>Known work</dt>
+                      <dt>Known required work</dt>
                       <dd>
                         {item.completed} / {item.total} completed
                       </dd>
@@ -778,12 +798,12 @@ export default function Home({
                   <progress
                     value={item.completed}
                     max={Math.max(item.total, 1)}
-                    aria-label={course.name + " assignment completion"}
+                    aria-label={course.name + " required assignment completion"}
                   />
                   <p className="fine">{item.reason}</p>
                   {grade.current !== null && (
                     <p>
-                      Calculated from supplied scores:{" "}
+                      Calculated from supplied weighted scores:{" "}
                       <strong>{grade.current.toFixed(1)}%</strong>
                     </p>
                   )}
@@ -802,6 +822,44 @@ export default function Home({
                       {warning}
                     </p>
                   ))}
+                  {(course.gradeItems.length > 0 || course.gradingComponents.length > 0) && (
+                    <details className="grade-details">
+                      <summary>Saved grade details</summary>
+                      {course.gradeItems.length > 0 && (
+                        <>
+                          <h4>Published grade items</h4>
+                          <p className="fine">Individual item scores do not establish a category average or an overall course grade.</p>
+                          <ul>
+                            {course.gradeItems.map((gradeItem) => (
+                              <li key={gradeItem.id}>
+                                <strong>{gradeItem.title}</strong>
+                                {gradeItem.category ? " · " + gradeItem.category : ""}
+                                {" · "}{gradeItem.score === null ? "Score not published" : `${gradeItem.score}/${gradeItem.possible}`}
+                                {gradeItem.score === null && gradeItem.possible !== null ? ` · ${gradeItem.possible} possible points` : ""}
+                                {gradeItem.sourceUrl && <> · <ResourceLink url={gradeItem.sourceUrl}>Grade source</ResourceLink></>}
+                                {gradeItem.notes && <p className="fine">{gradeItem.notes}</p>}
+                              </li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                      {course.gradingComponents.length > 0 && (
+                        <>
+                          <h4>Course grading components</h4>
+                          <ul>
+                            {course.gradingComponents.map((component) => (
+                              <li key={component.id}>
+                                <strong>{component.title}</strong>
+                                {" · "}{component.weight > 0 ? `${component.weight}% of course` : "Unweighted saved record"}
+                                {" · "}{component.score === null ? "Score not published" : `${component.score}/${component.possible}`}
+                                {component.weight > 0 && (component.finalized ? " · Finalized" : " · In progress")}
+                              </li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                    </details>
+                  )}
                   {!!course.resources.length && (
                     <ul className="resources">
                       {course.resources.map((resource) => (
@@ -866,14 +924,14 @@ export default function Home({
             <h2>Remember what is coming</h2>
             <p>
               {plan.reminders.some(
-                (item) => item.status === "scheduled" && item.enabled,
+                (item) => item.status === "scheduled" && item.enabled && (!cloud || item.executionContext === "cloud"),
               )
                 ? "Verified reminders are listed below."
                 : "No verified reminders are active yet."}
             </p>
             {plan.reminders.map((item) => (
               <p key={item.id}>
-                {item.title} · {item.schedule} · {item.status}
+                {item.title} · {item.schedule} · {cloud && item.status === "scheduled" && item.executionContext !== "cloud" ? "Cloud reminder not verified" : item.status}
               </p>
             ))}
             <div className="actions">
@@ -1025,6 +1083,11 @@ export default function Home({
                   </select>
                 </label>
               </div>
+              <label className="checkbox">
+                <input name="optional" type="checkbox" defaultChecked={selectedTask?.optional ?? false} />
+                Optional assignment
+              </label>
+              <p className="fine">Optional work stays visible but is excluded from required workload, overdue warnings and study suggestions.</p>
               <label>
                 Next small step
                 <input name="reason" defaultValue={selectedTask?.reason} />
@@ -1184,13 +1247,15 @@ export default function Home({
                   <p>
                     {importPreview.courses.length} classes ·{" "}
                     {importPreview.tasks.length} assignments ·{" "}
-                    {importPreview.tasks.filter((task) => !task.dueAt).length}{" "}
-                    unknown deadlines
+                    {importPreview.tasks.filter((task) => task.optional).length} optional ·{" "}
+                    {importPreview.tasks.filter((task) => !task.dueAt && !task.optional && task.state !== "done").length}{" "}
+                    unknown required deadlines
                   </p>
                   <ul>
                     {importPreview.tasks.slice(0, 8).map((task) => (
                       <li key={task.id}>
                         {task.course}: {task.title} ·{" "}
+                        {task.optional ? "Optional · " : ""}
                         {formatDue(task, plan.timezone)} ·{" "}
                         {task.state === "done" ? "Completed" : "Open"}
                       </li>
@@ -1198,8 +1263,8 @@ export default function Home({
                   </ul>
                   <button
                     className="primary"
-                    onClick={() => {
-                      if (change(() => importPreview)) {
+                    onClick={async () => {
+                      if (await change(() => importPreview)) {
                         close();
                         setImportText("");
                         setNotice(
@@ -1267,7 +1332,13 @@ export default function Home({
               <p>
                 Continue with {plan.name}’s {plan.semester} plan in ChatGPT.
               </p>
-              {desktopUrl ? (
+              {cloud ? (
+                <>
+                  <p>Your cloud plan is available from your phone or computer, even when the computer is off.</p>
+                  <p className="fine">Copy the request below into ChatGPT with Semester Navigator connected. Choose Astra if available. If the plugin is not connected yet, open the connection guide. ChatGPT Work can also use this dashboard through its cloud browser after sign-in.</p>
+                  <ResourceLink url={cloud.serviceUrl+"/cloud/connect?profileId="+encodeURIComponent(plan.profileId)}>Connect Semester Navigator</ResourceLink>
+                </>
+              ) : desktopUrl ? (
                 <>
                   <div className="actions">
                     <a className="primary" href={desktopUrl}>Open desktop chat</a>
@@ -1288,7 +1359,7 @@ export default function Home({
                   This page cannot select that project automatically.
                 </p>
               )}
-              <details>
+              {!cloud && <details>
                 <summary>Continue from my phone</summary>
                 <p>
                   For a local desktop workspace, open Remote in the ChatGPT
@@ -1312,7 +1383,7 @@ export default function Home({
                 <ResourceLink url="https://learn.chatgpt.com/docs/remote-connections">
                   Set up phone access
                 </ResourceLink>
-              </details>
+              </details>}
               <label>
                 Request for Semester Navigator
                 <textarea

@@ -1,4 +1,23 @@
 import {test,expect,openDashboard,saved,readPlan} from './fixtures.mjs';
+import {recordSourceCheck,expireSourceAccess} from '../../lib/plan-model.mjs';
+
+test('a partial browser reconnect import uses the saved source contract and clears resolved errors',async({page,request,workspace})=>{
+  const initial=await readPlan(request,workspace);
+  let plan=recordSourceCheck(initial.plan,{profileId:initial.plan.profileId,source:{id:'school',title:'School portal',provider:'brightspace',accessMode:'browser',connection:{state:'verified',tool:'synthetic-browser',evidence:'Synthetic exposed school identity checked.',checkedAt:'2026-09-09T14:00:00Z',expectedIdentity:'student@example.edu',observedIdentity:'student@example.edu',identityStorageApproved:true}}});
+  plan=expireSourceAccess(plan,{profileId:plan.profileId,sourceId:'school',checkedAt:'2026-09-09T15:00:00Z',reason:'School session expired.'});
+  expect((await request.put(workspace.url+'/api/plan',{data:{plan,baseRevision:initial.revision}})).status()).toBe(200);
+  await openDashboard(page,workspace);
+  await page.getByRole('button',{name:'Import plan',exact:true}).click();
+  await page.getByText('Or paste the prepared plan',{exact:true}).click();
+  const patch={profileId:plan.profileId,sources:[{id:'school',connection:{state:'verified',checkedAt:'2026-09-09T16:00:00Z',evidence:'Synthetic intended school identity reverified.',lastError:'',nextAction:''}}]};
+  await page.getByLabel('Plan JSON',{exact:true}).fill(JSON.stringify(patch));
+  await page.getByRole('button',{name:'Preview import',exact:true}).click();
+  await page.getByRole('button',{name:'Confirm import',exact:true}).click();await saved(page);
+  await page.reload();await saved(page);
+  const actual=await readPlan(request,workspace);
+  expect(actual.plan.sources[0].connection).toMatchObject({state:'verified',lastError:'',nextAction:'',expectedIdentity:'student@example.edu'});
+  expect(actual.plan.sources[0].accessMode).toBe('browser');expect(actual.plan.tasks).toEqual(plan.tasks);
+});
 
 test('an import preview made during a save uses the confirmed revision when accepted',async({page,request,workspace})=>{
   await openDashboard(page,workspace);
@@ -29,7 +48,7 @@ test('an import preview made during a save uses the confirmed revision when acce
     await page.getByText('Or paste the prepared plan',{exact:true}).click();
     await page.getByLabel('Plan JSON',{exact:true}).fill(JSON.stringify(imported));
     await page.getByRole('button',{name:'Preview import',exact:true}).click();
-    await expect(page.getByText('1 classes · 3 assignments · 1 unknown deadlines',{exact:true})).toBeVisible();
+    await expect(page.getByText('1 classes · 3 assignments · 0 optional · 1 unknown required deadlines',{exact:true})).toBeVisible();
 
     release();
     await saved(page);

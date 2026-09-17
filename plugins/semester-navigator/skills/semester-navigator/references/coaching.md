@@ -57,6 +57,16 @@ then offer a similar problem. Adapt scope to high-school, college, or other
 course level rather than assuming the same workload for every student.
 
 For grade goals, use only known scores, possible points, and confirmed weights.
+Record individual published scores in `courses[].gradeItems` with a stable ID,
+title, observed category, actual `score` and `possible` points, source URL, and
+supporting notes. A score requires its real denominator. Keep unpublished scores
+and unknown denominators null. Individual items do not establish a category
+average, their share of the final grade, or completed category weight.
+Use `gradingComponents` only for a published category average or a component
+with a known share of the course grade. Keep policy-only category scores null;
+never copy one assignment's percentage into its category average. Do not infer
+an aggregation method from a few visible items. Read back saved grade items and
+components in the dashboard's **Saved grade details** after saving.
 A current category average does not mean the category is finished. For example,
 an 88% current Labs average in a category worth 50% of the course does not establish
 that the student has earned all 50% of that category's final weight. Set

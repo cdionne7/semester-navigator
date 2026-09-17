@@ -12,14 +12,20 @@ at a time only for facts or choices the tools and materials cannot establish.
 
 ## Choose the path
 
+- **Phone, computer off, cloud use, or callable cloud plan tools:** read
+  [cloud](references/cloud.md) first. List saved cloud profiles and load the
+  explicitly selected student and term before consulting local files. Use the
+  same authoritative plan from phone and desktop. Preserve an explicit choice
+  to use a local workspace; do not migrate or create another plan implicitly.
 - **New desktop setup or incomplete installation:** read [setup](references/setup.md).
   Ask which school the student attends, discover their actual learning tools,
   and guide supported account/browser connections using [sources](references/sources.md).
   Use the bundled template. Do not require parent configuration, a known LMS
   name, prepared course lists, or uploads. Files are an optional fallback.
-- **Web-only:** read [web](references/web.md). Use the current ChatGPT Work
-  environment and available hosted tools. Do not prescribe Windows commands,
-  local folders, or a repository marketplace installation on the web.
+- **Web-only without connected cloud plan tools:** read [cloud](references/cloud.md)
+  for the authenticated cloud-browser path, or [web](references/web.md) for a
+  student-chosen portable tracker. Do not prescribe Windows commands, local
+  folders, or a repository marketplace installation on the web.
 - **Desktop request but this chat lacks local tools:** use [setup](references/setup.md)
   to guide the relevant Work/Codex task selection first; do not silently turn
   the requested school connection into an upload-only plan.
@@ -28,15 +34,21 @@ at a time only for facts or choices the tools and materials cannot establish.
   [coaching](references/coaching.md).
 - **Actual reminders or calendar actions:** read [reminders](references/reminders.md).
 - **Dashboard-to-chat or phone access:** read [continuity](references/continuity.md).
-  Use the student's actual local workspace for desktop chat and Remote for
-  phone continuation. Do not promise local/cloud plan synchronization.
+  Choose the existing cloud plan for independent phone use. Remote is an
+  optional continuation of an explicitly local workspace and requires the host
+  computer. Do not promise local/cloud plan synchronization.
 
 Read only the references needed for the current request. If another skill is
 available for a requested artifact or Site, use it for that operation.
 
 ## Resume before repeating intake
 
-In a student project, read `chatgpt.md`, `.semester-navigator/profile.json`, and
+For cloud use, list and load the selected saved profile through the actual
+connected tools or authenticated cloud dashboard as described in
+[cloud](references/cloud.md). Read its source coverage and next action; do not
+look for a local `profile.json` or create a student root to resume a cloud plan.
+
+For an explicitly local student project, read `chatgpt.md`, `.semester-navigator/profile.json`, and
 the current plan through the dashboard's API/store when available. Before a
 first save, the approved plan is in `app/student-seed.json`; later local saves
 use `.semester-navigator/plan.json`. Read that file's actual envelope/schema
@@ -62,9 +74,12 @@ instructions or student facts into a new project.
 
 ## Student and source boundaries
 
-Use one private workspace per student and term. Recommend the student's own
-eligible account. Separate local profiles do not grant another person account
-access. Do not require the roles “son” or “daughter,” parent preconfiguration,
+Keep one authoritative plan per student and term, either its selected cloud
+profile or its explicitly local workspace. Recommend the student's own eligible
+account. People sharing an account can access that account's student plans;
+profile selection prevents accidental mixing and is not a privacy boundary.
+Separate local profiles do not grant another person account access.
+Do not require the roles “son” or “daughter,” parent preconfiguration,
 a new browser profile, or a particular school platform. A school Google account
 is not proof of Classroom access, and a partial product name is not a provider
 identification.

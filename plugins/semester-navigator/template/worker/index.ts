@@ -1,10 +1,14 @@
 /** Cloudflare Worker entry point for the vinext-starter template. */
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
+import { handleCloudApp } from "../lib/cloud-app.mjs";
 
 interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
+  SEMESTER_CLOUD_MODE?: string;
+  SEMESTER_CLOUD_ORIGIN?: string;
+  SEMESTER_ACCEPTANCE_MODE?: string;
   IMAGES: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {
@@ -28,6 +32,10 @@ interface ExecutionContext {
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+
+    if (env.SEMESTER_CLOUD_MODE === "true") {
+      return handleCloudApp(request, env);
+    }
 
     if (url.pathname === "/_vinext/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
