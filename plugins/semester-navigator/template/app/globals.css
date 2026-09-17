@@ -32,7 +32,8 @@ textarea,
 summary {
   touch-action: manipulation;
 }
-button {
+button,
+:where(.actions a.primary) {
   padding: 0.65rem 0.9rem;
   border: 1px solid var(--line);
   background: var(--card);
@@ -41,6 +42,11 @@ button {
   font-weight: 650;
   cursor: pointer;
   min-height: 44px;
+}
+.actions a.primary {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
 }
 button:hover {
   border-color: var(--ink);
@@ -448,6 +454,7 @@ footer {
   line-height: 1.6;
 }
 .modal {
+  margin: auto;
   color: var(--ink);
   background: var(--card);
   border: 1px solid var(--line);

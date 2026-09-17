@@ -173,6 +173,15 @@ export async function startStudentServer({
           error: "This request did not come from the student dashboard.",
         });
       const url = new URL(request.url, `http://${allowedHost}`);
+      if (url.pathname === "/api/runtime") {
+        if (request.method !== "GET")
+          return send(405, { error: "Use GET for the local workspace runtime." });
+        return send(200, {
+          mode: "local",
+          profileId: state.profile.profile_id,
+          workspacePath: state.root,
+        });
+      }
       if (url.pathname === "/api/profile") {
         if (request.method !== "GET")
           return send(405, { error: "Use GET for the workspace identity." });

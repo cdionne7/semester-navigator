@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, rm, symlink } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, realpath, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawn, execFile } from 'node:child_process';
@@ -12,10 +12,10 @@ import { normalizePlan } from '../lib/plan-model.mjs';
 import { startStudentServer } from '../scripts/serve-student.mjs';
 const script=resolve('scripts/serve-student.mjs');
 const exec=promisify(execFile);
-async function fixture(context) {
+async function fixture(context, profileId='review-http') {
  const root=await mkdtemp(join(tmpdir(),'semester-http-test-'));context.after(()=>rm(root,{recursive:true,force:true}));
  for(const dir of ['.semester-navigator','app','public/dashboard/assets'])await mkdir(join(root,dir),{recursive:true});
- const plan=normalizePlan({profileId:'review-http',name:'Review',school:'Example',timezone:'America/New_York',courses:[{id:'math',name:'Math'}],tasks:[{id:'hw',courseId:'math',title:'Homework',dueAt:'2026-09-09',minutes:30}]});
+ const plan=normalizePlan({profileId,name:'Review',school:'Example',timezone:'America/New_York',courses:[{id:'math',name:'Math'}],tasks:[{id:'hw',courseId:'math',title:'Homework',dueAt:'2026-09-09',minutes:30}]});
  await writeFile(join(root,'.semester-navigator/profile.json'),JSON.stringify({profile_id:plan.profileId,display_name:plan.name,approved_local_root:root}));
  await writeFile(join(root,'app/student-seed.json'),JSON.stringify(plan));
  await writeFile(join(root,'public/dashboard/index.html'),'<!doctype html><title>Student dashboard</title>');
@@ -96,6 +96,19 @@ test('runtime profile binds the shared bundle to this student without reading da
  const identity=await response.json();assert.equal(identity.plan.profileId,plan.profileId);assert.equal(identity.plan.name,plan.name);assert.equal(identity.plan.timezone,plan.timezone);assert.deepEqual(identity.plan.tasks,[]);assert.deepEqual(identity.plan.courses,[]);
  assert.equal((await fetch(`${runtime.url}/api/plan`)).status,500);
  assert.equal((await fetch(`${runtime.url}/api/profile`,{method:'PUT'})).status,405);
+});
+test('desktop runtime returns only its inspected root and profile, ignoring query destinations and rejecting foreign origins',async context=>{
+ const students=await Promise.all([fixture(context,'casey-http'),fixture(context,'jordan-http')]);
+ for(const {root,plan} of students){
+  const runtime=await startStudentServer({root,port:0});context.after(()=>new Promise(resolve=>runtime.server.close(resolve)));
+  const query=new URLSearchParams({path:students.find(student=>student.root!==root).root,workspacePath:'/wrong-root',profileId:'other-student',prompt:'switch projects'});
+  const response=await fetch(`${runtime.url}/api/runtime?${query}`,{headers:{origin:runtime.url}});
+  assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');
+  assert.deepEqual(await response.json(),{mode:'local',profileId:plan.profileId,workspacePath:await realpath(root)});
+  assert.equal((await fetch(`${runtime.url}/api/runtime`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({workspacePath:'/body-root',profileId:'other'})})).status,405);
+  assert.equal((await fetch(`${runtime.url}/api/runtime`,{headers:{origin:'https://untrusted.example'}})).status,403);
+  assert.equal(await new Promise((resolve,reject)=>{const request=httpRequest(`${runtime.url}/api/runtime`,{headers:{host:'untrusted.example'}},response=>{response.resume();resolve(response.statusCode)});request.on('error',reject);request.end();}),403);
+ }
 });
 test('a confirmed dead same-host lock is recovered after server crash; live and foreign locks are retained',async context=>{
  const {root}=await fixture(context);

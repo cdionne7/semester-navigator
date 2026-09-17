@@ -27,6 +27,9 @@ at a time only for facts or choices the tools and materials cannot establish.
 - **Plan, study, research, grade scenarios, or draft feedback:** read
   [coaching](references/coaching.md).
 - **Actual reminders or calendar actions:** read [reminders](references/reminders.md).
+- **Dashboard-to-chat or phone access:** read [continuity](references/continuity.md).
+  Use the student's actual local workspace for desktop chat and Remote for
+  phone continuation. Do not promise local/cloud plan synchronization.
 
 Read only the references needed for the current request. If another skill is
 available for a requested artifact or Site, use it for that operation.

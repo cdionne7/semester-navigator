@@ -1,6 +1,11 @@
 # Semester Navigator acceptance evidence
 
-Latest review: September 10, 2026. The [full autonomous student review](https://github.com/cdionne7/semester-navigator/blob/v0.3.1-beta.1/reviews/2026-09-10-full-student-acceptance.md)
+Latest continuity review: September 17, 2026. The [desktop and phone report](https://github.com/cdionne7/semester-navigator/blob/v0.3.2-beta.1/reviews/2026-09-17-desktop-phone-continuity.md)
+records folder-specific chat links, safe dashboard refresh, phone instructions,
+and their verification limits. Native composer inspection was blocked; actual
+phone pairing and independent cloud plan access remain unverified or absent.
+
+The September 10 [full autonomous student review](https://github.com/cdionne7/semester-navigator/blob/v0.3.1-beta.1/reviews/2026-09-10-full-student-acceptance.md)
 records actual college and high-school browser/setup/coaching journeys,
 corrective adversarial loops, and the exact limits of the evidence. Both
 journeys used synthetic school accounts. Real school authorization, native

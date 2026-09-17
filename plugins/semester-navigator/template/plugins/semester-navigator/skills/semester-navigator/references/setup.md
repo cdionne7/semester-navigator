@@ -26,8 +26,8 @@ existing 0.2 student workspace for school connections” below. Do not wait for
 the optional after-planning update when the requested feature needs new code.
 
 The normal desktop route uses a prebuilt dashboard bundled with the
-[v0.3.1-beta.1 release](https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.1-beta.1).
-For an initial download, use its `semester-navigator-plugin-v0.3.1.zip` and verify
+[v0.3.2-beta.1 release](https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.2-beta.1).
+For an initial download, use its `semester-navigator-plugin-v0.3.2.zip` and verify
 the accompanying `.zip.sha256` before extraction. Do not substitute the older default-branch
 installer or a GitHub source archive for this prebuilt plugin bundle.
 It does not require Git, GitHub CLI, GitHub sign-in, a system Node installation,
@@ -95,6 +95,12 @@ not the default first question for desktop setup. If access is blocked, state
 the exact limitation and next supported step without requiring parent setup.
 
 ## Save and open the workspace
+
+After the first saved plan is usable, follow [continuity](continuity.md) to
+open the dashboard beside the student's project chat and explain its **Open
+desktop chat** action. If phone access is requested, guide Remote pairing and
+verify an actual exchange. Keep pairing out of the critical path to the first
+useful plan. Never say the phone is connected from a successful local setup.
 
 Use the deterministic bootstrap in the bundled template. Supply the confirmed
 profile ID, display name, school, term, time zone, and student root. Its default
@@ -167,7 +173,7 @@ compatible runtime or the student's existing compatible portable runtime:
 ```text
 node <verified-0.3-template>/scripts/update-semester-navigator.mjs
   --root <existing-student-root> --mode student
-  --raw-root https://raw.githubusercontent.com/cdionne7/semester-navigator/v0.3.1-beta.1
+  --raw-root https://raw.githubusercontent.com/cdionne7/semester-navigator/v0.3.2-beta.1
   --allow-offline no
 ```
 
