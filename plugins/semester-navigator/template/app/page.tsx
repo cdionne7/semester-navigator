@@ -24,6 +24,7 @@ import {
 import {
   calendarExport,
   coachingPrompt,
+  desktopChatUrl,
   safeWebUrl,
   localDueParts,
   dueFromLocal,
@@ -109,12 +110,12 @@ function checkedTime(value: string | null, timezone: string) {
 export default function Home({
   initialPlan = initial,
 }: { initialPlan?: Plan } = {}) {
-  const store = usePlan(initialPlan);
+  const [dialog, setDialog] = useState<Dialog>(null);
+  const store = usePlan(initialPlan, dialog !== null && dialog !== "support");
   const { plan, edit, canEdit } = store;
   const [view, setView] = useState<keyof typeof views>("today");
   const [showDone, setShowDone] = useState(false);
   const [courseFilter, setCourseFilter] = useState("");
-  const [dialog, setDialog] = useState<Dialog>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [notice, setNotice] = useState("");
@@ -125,7 +126,25 @@ export default function Home({
   const [formError, setFormError] = useState("");
   const [importText, setImportText] = useState("");
   const [importPreview, setImportPreview] = useState<Plan | null>(null);
-  const [prompt, setPrompt] = useState("");
+  const [helpRequest, setHelpRequest] = useState<{mode: string; taskId?: string; courseId?: string} | null>(null);
+  const prompt = helpRequest
+    ? coachingPrompt(plan, helpRequest.mode, helpRequest.taskId, helpRequest.courseId)
+    : "";
+  const [runtime, setRuntime] = useState<unknown>(null);
+  const [checkingRuntime, setCheckingRuntime] = useState(false);
+  useEffect(() => {
+    if (dialog !== "support") return;
+    const controller = new AbortController();
+    void fetch("/api/runtime", {cache: "no-store", signal: controller.signal})
+      .then(async (response) => response.ok ? response.json() : null)
+      .then((value: unknown) => { if (!controller.signal.aborted) setRuntime(value); })
+      .catch(() => { /* Copying the request still works without local routing. */ })
+      .finally(() => { if (!controller.signal.aborted) setCheckingRuntime(false); });
+    return () => controller.abort();
+  }, [dialog, plan.profileId]);
+  const desktopUrl = helpRequest && store.status === "saved"
+    ? desktopChatUrl(runtime, plan, helpRequest.mode, helpRequest.taskId, helpRequest.courseId)
+    : "";
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
@@ -191,7 +210,9 @@ export default function Home({
   const exportPlan = () =>
     download("semester-navigator-backup.json", JSON.stringify(plan, null, 2));
   const requestHelp = (mode: string, task?: Task, course?: Course) => {
-    setPrompt(coachingPrompt(plan, mode, task?.id, course?.id));
+    setRuntime(null);
+    setCheckingRuntime(true);
+    setHelpRequest({mode, taskId: task?.id, courseId: course?.id});
     open("support");
   };
   const copyPrompt = async () => {
@@ -1244,28 +1265,73 @@ export default function Home({
           {dialog === "support" && (
             <section>
               <p>
-                Copy this request into your Semester Navigator chat in ChatGPT
-                desktop. ChatGPT will guide the next step using your approved
-                school connections. This dashboard does not send the request
-                automatically.
+                Continue with {plan.name}’s {plan.semester} plan in ChatGPT.
               </p>
+              {desktopUrl ? (
+                <>
+                  <div className="actions">
+                    <a className="primary" href={desktopUrl}>Open desktop chat</a>
+                  </div>
+                  <p className="fine">
+                    Opens a new chat in your student workspace with the request
+                    ready. Choose Astra in the model picker if available, then
+                    press Send. Your saved plan supplies the context.
+                  </p>
+                </>
+              ) : checkingRuntime ? (
+                <p role="status">Finding your desktop workspace…</p>
+              ) : store.status !== "saved" ? (
+                <p>Save or resolve pending changes before opening a new desktop chat.</p>
+              ) : (
+                <p>
+                  Open your student project in ChatGPT and paste the request below.
+                  This page cannot select that project automatically.
+                </p>
+              )}
+              <details>
+                <summary>Continue from my phone</summary>
+                <p>
+                  For a local desktop workspace, open Remote in the ChatGPT
+                  mobile app, choose your computer, then your Semester Navigator
+                  project or chat. Remote uses that computer’s saved plan,
+                  plugin and school connections.
+                </p>
+                <p className="fine">
+                  Pair your phone once in desktop Settings → Connections →
+                  Control this Mac or PC. Keep the computer awake, online and
+                  ChatGPT running. A local dashboard address does not open on
+                  your phone; Remote connects you to the computer instead.
+                </p>
+                {!desktopUrl && (
+                  <p className="fine">
+                    A hosted dashboard has separate storage. It does not
+                    automatically sync with a desktop workspace or connect its
+                    plan to a phone chat.
+                  </p>
+                )}
+                <ResourceLink url="https://learn.chatgpt.com/docs/remote-connections">
+                  Set up phone access
+                </ResourceLink>
+              </details>
               <label>
                 Request for Semester Navigator
                 <textarea
                   className="prompt"
                   value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  rows={12}
+                  readOnly
+                  rows={8}
                 />
               </label>
               <div className="actions">
-                <button className="primary" onClick={() => void copyPrompt()}>
+                <button onClick={() => void copyPrompt()}>
                   Copy request
                 </button>
-                <ResourceLink url="https://chatgpt.com/">
-                  Open ChatGPT
-                </ResourceLink>
               </div>
+              <p className="fine">
+                Already chatting in your student project? Copy and paste this
+                request there. Nothing is sent automatically. Changes saved to
+                this dashboard’s plan appear here while it is open.
+              </p>
             </section>
           )}
           {dialog === "blocks" &&

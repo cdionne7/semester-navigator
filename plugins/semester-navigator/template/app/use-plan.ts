@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { normalizePlan, type Plan } from "../lib/plan-model.mjs";
 
 type Backup = { plan: Plan; baseRevision: number; dirty: boolean };
@@ -8,7 +8,7 @@ export type SaveState =
   "loading" | "saved" | "saving" | "pending" | "conflict" | "unavailable";
 
 /** A failed read never authorizes a write. Only an explicit edit enters the save queue. */
-export function usePlan(initial: Plan) {
+export function usePlan(initial: Plan, refreshPaused = false) {
   const [plan, setPlan] = useState(initial);
   const [status, setStatus] = useState<SaveState>("loading");
   const [error, setError] = useState("");
@@ -20,11 +20,31 @@ export function usePlan(initial: Plan) {
   const pending = useRef(false);
   const mounted = useRef(true);
   const loadGeneration = useRef(0);
+  const refreshRequest = useRef<AbortController | null>(null);
+  const pauseRefresh = useRef(refreshPaused);
   const storageKey = "semester-navigator-v2:" + initial.profileId;
 
+  const cancelRefresh = useCallback(() => {
+    refreshRequest.current?.abort();
+    refreshRequest.current = null;
+  }, []);
+
   const backup = useCallback(
-    (value: Plan, dirty: boolean) => {
+    (value: Plan, dirty: boolean, preserveDirty = false) => {
       try {
+        if (preserveDirty) {
+          // Another tab can have unsaved work under this profile's shared key.
+          // An unsolicited read must not replace its recovery copy.
+          const existing = localStorage.getItem(storageKey);
+          if (existing) {
+            try {
+              if (JSON.parse(existing)?.dirty === true) return;
+            } catch {
+              // Leave an unreadable recovery copy for the explicit load path.
+              return;
+            }
+          }
+        }
         localStorage.setItem(
           storageKey,
           JSON.stringify({
@@ -48,6 +68,7 @@ export function usePlan(initial: Plan) {
         setError("Wait for the current save to finish before reloading.");
         return;
       }
+      cancelRefresh();
       const generation = ++loadGeneration.current;
       writable.current = false;
       setStatus("loading");
@@ -122,8 +143,67 @@ export function usePlan(initial: Plan) {
         );
       }
     },
-    [backup, initial.profileId, storageKey],
+    [backup, cancelRefresh, initial.profileId, storageKey],
   );
+
+  const refresh = useCallback(async () => {
+    // Background reads are only safe for a fully saved, visible browser copy.
+    // They do not move the UI into the explicit reload's read-only state.
+    if (
+      !mounted.current || document.visibilityState !== "visible" ||
+      pauseRefresh.current ||
+      !writable.current || pending.current || inFlight.current ||
+      refreshRequest.current
+    ) return;
+    const controller = new AbortController();
+    refreshRequest.current = controller;
+    const generation = loadGeneration.current;
+    const checkedSequence = sequence.current;
+    const checkedRevision = revision.current;
+    try {
+      const response = await fetch("/api/plan", {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (!response.ok) return;
+      const result = (await response.json()) as {
+        plan: unknown;
+        revision: number;
+      };
+      const server = normalizePlan(result.plan, initial.profileId);
+      if (
+        !Number.isInteger(result.revision) ||
+        !mounted.current || refreshRequest.current !== controller ||
+        pauseRefresh.current ||
+        generation !== loadGeneration.current ||
+        checkedSequence !== sequence.current ||
+        checkedRevision !== revision.current ||
+        !writable.current || pending.current || inFlight.current ||
+        result.revision <= revision.current
+      ) return;
+      current.current = server;
+      revision.current = result.revision;
+      setPlan(server);
+      backup(server, false, true);
+    } catch {
+      // Keep the last confirmed view usable after a failed or cancelled check.
+    } finally {
+      if (refreshRequest.current === controller) refreshRequest.current = null;
+    }
+  }, [backup, initial.profileId]);
+
+  // Form drafts have not entered the save queue yet. Stop an already-running
+  // read before the browser can adopt it over the form's original revision.
+  useLayoutEffect(() => {
+    pauseRefresh.current = refreshPaused;
+    if (refreshPaused) {
+      cancelRefresh();
+      return;
+    }
+    // State changes only after the asynchronous external-store read completes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void refresh();
+  }, [cancelRefresh, refresh, refreshPaused]);
 
   useEffect(() => {
     mounted.current = true;
@@ -133,8 +213,21 @@ export function usePlan(initial: Plan) {
     return () => {
       mounted.current = false;
       loadGeneration.current += 1;
+      cancelRefresh();
     };
-  }, [load]);
+  }, [cancelRefresh, load]);
+
+  useEffect(() => {
+    const check = () => { void refresh(); };
+    const interval = window.setInterval(check, 15_000);
+    window.addEventListener("focus", check);
+    document.addEventListener("visibilitychange", check);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", check);
+      document.removeEventListener("visibilitychange", check);
+    };
+  }, [refresh]);
 
   const flush = useCallback(async () => {
     if (!writable.current || inFlight.current || !pending.current) return;
@@ -224,6 +317,7 @@ export function usePlan(initial: Plan) {
         },
         initial.profileId,
       );
+      cancelRefresh();
       sequence.current += 1;
       pending.current = true;
       current.current = next;
@@ -231,7 +325,7 @@ export function usePlan(initial: Plan) {
       backup(next, true);
       void flush();
     },
-    [backup, flush, initial.profileId],
+    [backup, cancelRefresh, flush, initial.profileId],
   );
 
   return {

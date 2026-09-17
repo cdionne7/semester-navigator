@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "release": "2026.09.10.1",
+  "release": "2026.09.17.1",
   "repository": "https://github.com/cdionne7/semester-navigator",
   "canonical_files": [
     ".agents/plugins/marketplace.json",
@@ -57,13 +57,14 @@
     "plugins/semester-navigator/skills/semester-navigator/SKILL.md",
     "plugins/semester-navigator/skills/semester-navigator/agents/openai.yaml",
     "plugins/semester-navigator/skills/semester-navigator/references/coaching.md",
+    "plugins/semester-navigator/skills/semester-navigator/references/continuity.md",
     "plugins/semester-navigator/skills/semester-navigator/references/reminders.md",
     "plugins/semester-navigator/skills/semester-navigator/references/setup.md",
     "plugins/semester-navigator/skills/semester-navigator/references/sources.md",
     "plugins/semester-navigator/skills/semester-navigator/references/web.md",
     "postcss.config.mjs",
-    "public/dashboard/assets/index-CRM8RuWn.css",
-    "public/dashboard/assets/index-Dsq-puEj.js",
+    "public/dashboard/assets/index-2TLkB9bq.css",
+    "public/dashboard/assets/index-ZpR9ohV_.js",
     "public/dashboard/index.html",
     "public/favicon.svg",
     "public/file.svg",
@@ -96,12 +97,15 @@
     "tests/acceptance/school-portal.test.mjs",
     "tests/acceptance/start-school-portal.mjs",
     "tests/distribution.test.mjs",
+    "tests/e2e/chat-handoff.spec.mjs",
     "tests/e2e/connected-school-fixture.mjs",
     "tests/e2e/connected-source.spec.mjs",
     "tests/e2e/corrections.spec.mjs",
     "tests/e2e/exact-deadlines.spec.mjs",
     "tests/e2e/fixtures.mjs",
     "tests/e2e/import-race.spec.mjs",
+    "tests/e2e/live-coach-refresh.spec.mjs",
+    "tests/e2e/refresh-backup-preservation.spec.mjs",
     "tests/e2e/student-journey.spec.mjs",
     "tests/plan-http.test.mjs",
     "tests/plan-model.test.mjs",
@@ -147,8 +151,8 @@
     "lib/student-site-state.mjs",
     "lib/student-tools.d.mts",
     "lib/student-tools.mjs",
-    "public/dashboard/assets/index-CRM8RuWn.css",
-    "public/dashboard/assets/index-Dsq-puEj.js",
+    "public/dashboard/assets/index-2TLkB9bq.css",
+    "public/dashboard/assets/index-ZpR9ohV_.js",
     "public/dashboard/index.html",
     "public/favicon.svg",
     "public/file.svg",
@@ -203,6 +207,10 @@
     {
       "source": "plugins/semester-navigator/skills/semester-navigator/references/coaching.md",
       "destination": ".semester-navigator/playbook/references/coaching.md"
+    },
+    {
+      "source": "plugins/semester-navigator/skills/semester-navigator/references/continuity.md",
+      "destination": ".semester-navigator/playbook/references/continuity.md"
     },
     {
       "source": "plugins/semester-navigator/skills/semester-navigator/references/reminders.md",

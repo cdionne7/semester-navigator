@@ -11,13 +11,13 @@ as a student's Site.
 
 ## Start here
 
-Forward this one link: [Semester Navigator beta setup](https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.1-beta.1).
+Forward this one link: [Semester Navigator beta setup](https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.2-beta.1).
 It provides the desktop bundle, its checksum, and the standalone web starter.
 On desktop, use the school-connection prompt below. No parent configuration,
 prepared course list, known portal name, or uploaded syllabus is required.
 The separate web starter can begin from an uploaded syllabus or assignment.
 
-This entry targets **v0.3.1-beta.1**. If its page or downloads are unavailable,
+This entry targets **v0.3.2-beta.1**. If its page or downloads are unavailable,
 do not substitute the repository's `main` branch, the old Windows installer,
 or an unpublished draft release. The beta source and instructions must travel
 together.
@@ -30,7 +30,7 @@ and paste:
 
 ```text
 Set up Semester Navigator for me from:
-https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.1-beta.1
+https://github.com/cdionne7/semester-navigator/releases/tag/v0.3.2-beta.1
 
 Ask me which school I attend, then help me connect the school accounts and
 websites I actually use, one question or sign-in step at a time. Find my current
@@ -76,6 +76,32 @@ The local dashboard works on that computer while its server is running. A later
 chat can reopen the student project and restart it using the saved instructions.
 A private hosted Site is optional for access away from that computer.
 
+## Chat beside the dashboard, or from your phone
+
+On desktop, keep the dashboard open beside your Semester Navigator project
+chat. Select Astra in the chat's model picker when available. **Open desktop
+chat** prepares a new chat in your exact student folder with the selected
+request ready to send. It reads your saved plan, so a new conversation does
+not require repeating setup. The link does not select the model or send the
+request automatically. Use **Copy request** to stay in an existing chat.
+The dashboard picks up saved assistant changes while open, preserving any
+unsaved or conflicting browser edits.
+
+For your phone, use **Remote** in the ChatGPT mobile app. Pair it once from
+desktop **Settings → Connections → Control this Mac or PC**, then choose
+your computer and student project/chat on the phone. This uses the same saved
+plan, plugin, files and school connections. The computer must remain awake,
+online and running ChatGPT; Windows Computer Use also needs it unlocked.
+[Official Remote setup](https://learn.chatgpt.com/docs/remote-connections)
+
+A local dashboard URL does not open on the phone. A private hosted dashboard
+can, but local and hosted plans do not automatically synchronize, and a phone
+cloud chat does not inherit the desktop's files or school login. Independent
+phone use while the laptop is off needs cloud-accessible context and an
+authorized plan connector, which this plugin does not yet provide. Remote is
+the supported continuation path for the desktop workspace.
+[Desktop link behavior](https://learn.chatgpt.com/docs/reference/commands#deep-links)
+
 [Windows details and legacy recovery](reference/windows-codex-bootstrap.md)
 are for the assistant to execute, not a student command checklist.
 
@@ -85,7 +111,7 @@ Open ChatGPT, preferably Work when available, attach one syllabus, and paste:
 
 ```text
 Use this Semester Navigator web starter with my attached syllabus:
-https://raw.githubusercontent.com/cdionne7/semester-navigator/v0.3.1-beta.1/reference/web-starter.md
+https://raw.githubusercontent.com/cdionne7/semester-navigator/v0.3.2-beta.1/reference/web-starter.md
 
 First show my nearest confirmed deadline and one useful thing I can do today.
 Ask only for missing information. Keep unknown dates and grades unknown. Save
@@ -96,7 +122,7 @@ reminders, and a private Site optional. If you cannot read the starter link,
 begin from the syllabus and tell me to attach the downloaded web-starter.md.
 ```
 
-If needed, download [web-starter.md](https://github.com/cdionne7/semester-navigator/releases/download/v0.3.1-beta.1/web-starter.md)
+If needed, download [web-starter.md](https://github.com/cdionne7/semester-navigator/releases/download/v0.3.2-beta.1/web-starter.md)
 from the same beta page and attach it to ChatGPT. It needs no custom GPT or
 plugin installation. The [repository copy](reference/web-starter.md) documents
 the complete portable tracker/import format. ChatGPT must state where the
@@ -162,7 +188,7 @@ npm run plugin:build
 ```
 
 `plugin:build` refreshes `plugins/semester-navigator/template/` and writes
-`artifacts/semester-navigator-plugin-v0.3.1.zip`. The archive has one
+`artifacts/semester-navigator-plugin-v0.3.2.zip`. The archive has one
 `semester-navigator/` root containing `.agents/plugins/marketplace.json` and the
 complete `plugins/semester-navigator/` directory. Do not distribute a plugin
 folder that lacks its template or prebuilt dashboard.
@@ -181,6 +207,7 @@ Implementation entry points:
 - [Plan schema and normalization](lib/plan-model.mjs), [local server](scripts/serve-student.mjs), and [hosted API](app/api/plan/route.ts)
 - [Acceptance evidence and remaining checks](reference/semester-navigator-uat.md)
 - [September 10 autonomous student review](https://github.com/cdionne7/semester-navigator/blob/v0.3.1-beta.1/reviews/2026-09-10-full-student-acceptance.md)
+- [Desktop and phone continuity review](https://github.com/cdionne7/semester-navigator/blob/v0.3.2-beta.1/reviews/2026-09-17-desktop-phone-continuity.md)
 - [Legacy GPT migration](reference/semester-navigator-gpt.md)
 
 Student bootstraps default to a generic student instance. Legacy family instance
